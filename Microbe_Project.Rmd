@@ -1,22 +1,19 @@
 ---
-title: "Microbe Project"
+title: "Bacterial Communities in Trades Biomes"
 author: "Moegamad Uzair Jack"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-# Loading Packages
+# Load Packages
 ```{r}
 library(phyloseq)
-library(plyr)
 library(tidyverse)
 library(vegan)
-library(ggplot2)
-library(grid)
 library(RColorBrewer)
-library(viridis)
 library(pals)
 library(MASS)
+
 ```
 
 # Set Working Directory
@@ -30,9 +27,11 @@ otu_TO <- read.table("TO_OTU.txt", header=TRUE)
 tax_TO <- read.delim("TO_TAX.txt", header=TRUE)
 tax_TO <- column_to_rownames(tax_TO, "X")
 tax_TO <- as.matrix(tax_TO)
+
 otu_TO <- otu_table(otu_TO, taxa_are_rows = TRUE)
 tax_TO <- tax_table(tax_TO)
 TO <- merge_phyloseq(otu_TO, tax_TO)
+
 ```
 
 # Load and Merge Metadata
@@ -41,79 +40,76 @@ META2 <- read.delim("META2.txt", header=TRUE)
 META <- read.delim("ALL_META.txt", header=TRUE)
 META_TO <- merge(META2, META, by="PANGAEA")
 META_TO <- column_to_rownames(META_TO, "PANGAEA")
+
 MAP <- sample_data(META_TO)
 TO1 <- merge_phyloseq(TO, MAP)
+
 ```
 
-# Subset: Bacteria Fraction
+# Subset: Bacteria Fraction in Trades Biomes
 ```{r}
 TO.bacteria <- subset_taxa(TO1, Kingdom == "Bacteria")
+TO.trades.bac <- subset_samples(TO.bacteria, Marine_pelagic_biomes_Longhurst_2007 == "Trades")
+
 ```
 
-# Antarctic vs South Atlantic Ocean Coastal Comparison
+# Normalise to Relative Abundance
 ```{r}
-TO.so.bac <- subset_samples(TO.bacteria, Ocean_sea_regions == "(SO)")
-TO.coastal.bac <- subset_samples(TO.bacteria, Marine_pelagic_biomes_Longhurst_2007 == "Coastal")
-TO.coastal.bac.sao <- subset_samples(TO.coastal.bac, Ocean_sea_regions == "(SAO)")
-SAO.SO.coastal <- merge_phyloseq(TO.so.bac, TO.coastal.bac.sao)
-SAO.SO.coastal <- subset_samples(SAO.SO.coastal, 
-                                 !(Sample_label %in% c("TARA_066_DCM_0.22-3", "TARA_066_SRF_0.22-3", "TARA_067_SRF_0.22-3")))
-```
+TO.trades.bac.rel <- transform_sample_counts(TO.trades.bac, function(x) x / sum(x))
+TO.trades.bac.rel.mean <- filter_taxa(TO.trades.bac.rel, function(x) mean(x) > 0, TRUE)
 
-# Normalize to Relative Abundance
+```
+# Alpha Diversity  by Ocean Region
 ```{r}
-SAO.SO.coastal.rel <- transform_sample_counts(SAO.SO.coastal, function(x) x / sum(x))
-SAO.SO.coastal.rel.mean <- filter_taxa(SAO.SO.coastal.rel, function(x) mean(x) > 0, TRUE)
-```
+plot_richness(TO.trades.bac, x = "Ocean_sea_regions", color = "Ocean_sea_regions", measures = c("Shannon", "Chao1")) +
+  labs(title = "Alpha Diversity of Bacterial Communities in Trades Biomes") +
+  theme_minimal()
 
-# Alpha Diversity (Raw Data)
+```
+# Ordination (PCoA)
 ```{r}
-plot_richness(SAO.SO.coastal, x = "Latitude", color = "Mean_Temperature_degC", measures = c("Shannon", "Chao1"))
+ord_trades <- ordinate(TO.trades.bac.rel.mean, method = "PCoA", distance = "bray")
+plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "Ocean_sea_regions") +
+  labs(title = "PCoA: Bacterial Communities in Trades Biomes") +
+  theme_minimal()
+
 ```
 
-# Ordination
-```{r}
-GP.ord <- ordinate(SAO.SO.coastal.rel.mean, method = "PCoA", distance = "bray")
-plot_ordination(SAO.SO.coastal.rel.mean, GP.ord, type = "samples", color = "Mean_Temperature_degC")
-```
 
-# Environmental Fitting for Ordination
+
+# Environmental Fitting with NMDS
 ```{r NMDS_and_envfit_plots, message=FALSE, warning=FALSE}
-# Convert sample_data to data frame for envfit
-psv <- data.frame(sample_data(SAO.SO.coastal.rel.mean))
+psv <- data.frame(sample_data(TO.trades.bac.rel.mean))
 
-# Convert OTU table to matrix (samples x taxa)
+# Convert OTU table to vegan matrix
 psotu2veg <- function(physeq) {
   OTU <- otu_table(physeq)
-  if (taxa_are_rows(OTU)) {
-    OTU <- t(OTU)
-  }
+  if (taxa_are_rows(OTU)) { OTU <- t(OTU) }
   return(as(OTU, "matrix"))
 }
-ps.otu.veg <- psotu2veg(SAO.SO.coastal.rel.mean)
+ps.otu.veg <- psotu2veg(TO.trades.bac.rel.mean)
 
-# Run NMDS (metaMDS)
-vare.mds <- metaMDS(ps.otu.veg, trace = FALSE)
+# NMDS
+nmds <- metaMDS(ps.otu.veg, trace = FALSE)
+ef <- envfit(nmds, psv, permu = 999, na.rm = TRUE)
 
-# Run environmental fitting (envfit)
-ef <- envfit(vare.mds, psv, permu = 999, na.rm = TRUE)
-
-# Plot NMDS and envfit side-by-side
-par(mfrow = c(1, 2), mar = c(5,5,4,2))
-
-# NMDS ordination plot
-plot(vare.mds, display = "sites", main = "NMDS Ordination")
-
-# Envfit vectors plot
-plot(ef, p.max = 0.01, main = "Envfit Vectors")
-
-# Reset plotting layout
-par(mfrow = c(1, 1))
+# Plot
+par(mfrow = c(1,2))
+plot(nmds, display = "sites", main = "NMDS Ordination - Trades Biomes")
+plot(ef, p.max = 0.01, main = "Environmental Vectors")
+par(mfrow = c(1,1))
 
 ```
-# Barplot of Dominant Classes
+# Barplot of Dominant Bacterial Classes By Ocean
 ```{r}
-ClassGlommed <- tax_glom(SAO.SO.coastal.rel.mean, "Class")
-plot_bar(ClassGlommed, "Sample_label", fill = "Class") + 
-  scale_fill_manual(values = colorRampPalette(brewer.pal(8, "Set1"))(39))
+ClassGlommed <- tax_glom(TO.trades.bac.rel.mean, "Class")
+
+n_classes <- length(unique(tax_table(ClassGlommed)[, "Class"]))
+palette_expanded <- colorRampPalette(brewer.pal(8, "Set3"))(n_classes)
+
+plot_bar(ClassGlommed, "Sample_label", fill = "Class", facet_grid = ~Ocean_sea_regions) +
+  scale_fill_manual(values = palette_expanded) +
+  labs(title = "Relative Abundance of Bacterial Classes in Trades Biomes") +
+  theme(axis.text.x = element_blank())
+
 ```
