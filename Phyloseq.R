@@ -5,7 +5,7 @@ library(vegan)
 library("ggplot2")
 library("grid")
 
-setwd("/Users/Emma/Documents/UCT\ /Honours\ module/honours\ module/Datasets")
+setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
 
 #Import Taxonomy and OTU files: 
 TAXfile="TO_TAX.txt"
