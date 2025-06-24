@@ -8,8 +8,8 @@ output: html_document
 # Loading Packages
 ```{r}
 library(phyloseq)
-library(tidyverse)
 library(plyr)
+library(tidyverse)
 library(vegan)
 library(ggplot2)
 library(grid)
