@@ -79,37 +79,45 @@ plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "O
 
 # Environmental Fitting with NMDS
 ```{r NMDS_and_envfit_plots, message=FALSE, warning=FALSE}
-psv <- data.frame(sample_data(TO.trades.bac.rel.mean))
+# Prepare sample metadata
+sample_df <- data.frame(sample_data(TO.trades.bac.rel.mean))
 
-# Convert OTU table to vegan matrix
-psotu2veg <- function(physeq) {
-  OTU <- otu_table(physeq)
-  if (taxa_are_rows(OTU)) { OTU <- t(OTU) }
-  return(as(OTU, "matrix"))
+# Convert OTU table to vegan-compatible matrix
+otu_to_matrix <- function(physeq) {
+  otu <- otu_table(physeq)
+  if (taxa_are_rows(otu)) otu <- t(otu)
+  return(as(otu, "matrix"))
 }
-ps.otu.veg <- psotu2veg(TO.trades.bac.rel.mean)
 
-# NMDS
-nmds <- metaMDS(ps.otu.veg, trace = FALSE)
-ef <- envfit(nmds, psv, permu = 999, na.rm = TRUE)
+otu_matrix <- otu_to_matrix(TO.trades.bac.rel.mean)
 
-# Plot
-par(mfrow = c(1,2))
-plot(nmds, display = "sites", main = "NMDS Ordination - Trades Biomes")
-plot(ef, p.max = 0.01, main = "Environmental Vectors")
-par(mfrow = c(1,1))
+# Run NMDS using Bray-Curtis distance
+nmds_result <- metaMDS(otu_matrix, distance = "bray", trace = FALSE)
+
+# Fit environmental variables
+envfit_result <- envfit(nmds_result, sample_df, permu = 999, na.rm = TRUE)
+
+# ---- OPTION 1: Display in Viewer (with resizing) ----
+par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2.5, 1))  # set margins for both plots
+
+# Plot NMDS ordination
+plot(nmds_result, 
+     display = "sites", 
+     main = "NMDS - Trades Biome (Bacteria)",
+     cex = 1.4,              # point size
+     cex.main = 1.6,         # title size
+     cex.lab = 1.3,          # axis label size
+     cex.axis = 1.1)         # tick label size
+
+# Plot environmental vectors
+plot(envfit_result, 
+     p.max = 0.01, 
+     col = "darkblue", 
+     main = "Environmental Fit (p < 0.01)")
+
+par(mfrow = c(1, 1))  # reset layout
+
+
 
 ```
-# Barplot of Dominant Bacterial Classes By Ocean
-```{r}
-ClassGlommed <- tax_glom(TO.trades.bac.rel.mean, "Class")
 
-n_classes <- length(unique(tax_table(ClassGlommed)[, "Class"]))
-palette_expanded <- colorRampPalette(brewer.pal(8, "Set3"))(n_classes)
-
-plot_bar(ClassGlommed, "Sample_label", fill = "Class", facet_grid = ~Ocean_sea_regions) +
-  scale_fill_manual(values = palette_expanded) +
-  labs(title = "Relative Abundance of Bacterial Classes in Trades Biomes") +
-  theme(axis.text.x = element_blank())
-
-```
