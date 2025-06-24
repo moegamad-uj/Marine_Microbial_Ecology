@@ -1,0 +1,38 @@
+---
+title: "MIcrobe Project"
+author: "Moegamad Uzair Jack"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Loading Packages
+```{r}
+library("phyloseq")
+library("ggplot2")
+```
+
+```{r}
+theme_set(theme_bw())
+```
+
+# Load Example Data
+To load example data into the working environment, use the data() command:
+```{r}
+data(GlobalPatterns)
+data(esophagus)
+data(enterotype)
+data(soilrep)
+```
+
+# Documentation
+In the package index, go to the names beginning with “data-” to see the documentation of currently available example datasets.
+```{r}
+?GlobalPatterns
+```
+# Run provided examples
+You can also try the examples included with the example data documentation (as well as examples for functions/methods) using the standard example command in R – in this case the examples for the enterotype dataset.
+```{r}
+example(enterotype, ask=FALSE)
+```
+
+
