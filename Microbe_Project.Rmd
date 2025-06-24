@@ -111,12 +111,6 @@ plot(ef, p.max = 0.01, main = "Envfit Vectors")
 par(mfrow = c(1, 1))
 
 ```
-
-
-
-
-
-
 # Barplot of Dominant Classes
 ```{r}
 ClassGlommed <- tax_glom(SAO.SO.coastal.rel.mean, "Class")
