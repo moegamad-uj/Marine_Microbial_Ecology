@@ -250,12 +250,15 @@ ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, color = Mean_Salinity_PSU, shape =
 
 # Barplot of Dominant Bacterial Phyla by Ocean
 ```{r}
-# Aggregate at Phylum level and get top 10 phyla
-PhylumGlommed <- tax_glom(TO.trades.bac.DCM.rel.mean, "Phylum")
+# First identify samples that are truly DCM
+truly_dcm <- subset_samples(TO.trades.bac.DCM.rel.mean, EnvironmentalFeature == "(DCM)")
+
+# Aggregate at Phylum level and get top 10 phyla using the filtered dataset
+PhylumGlommed <- tax_glom(truly_dcm, "Phylum")
 top_phyla <- names(sort(taxa_sums(PhylumGlommed), decreasing = TRUE)[1:15])
 PhylumGlommed_filtered <- prune_taxa(top_phyla, PhylumGlommed)
 
-# Create the plot
+# Create the plot with the filtered dataset
 ggplot(data = psmelt(PhylumGlommed_filtered), 
   aes(x = Sample_label, y = Abundance, fill = Phylum)) +
   geom_bar(stat = "identity", position = "stack", width = 0.8) +
