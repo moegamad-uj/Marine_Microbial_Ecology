@@ -58,8 +58,8 @@ trades_bacteria <- subset_samples(
 
 # Normalise to Relative Abundance
 ```{r}
-TO.trades.bac.rel <- transform_sample_counts(TO.trades.bac, function(x) x / sum(x))
-TO.trades.bac.rel.mean <- filter_taxa(TO.trades.bac.rel, function(x) mean(x) > 0, TRUE)
+bacteria_data <- transform_sample_counts(trades_bacteria, function(x) x / sum(x))
+TO.trades.bac.rel.mean <- filter_taxa(bacteria_data, function(x) mean(x) > 0, TRUE)
 
 ```
 # Alpha Diversity  by Ocean Region
