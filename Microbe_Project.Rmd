@@ -223,7 +223,7 @@ ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, color = Salinity, shape = Region))
   geom_segment(
     data = vecs,
     aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2),
-    arrow = arrow(length = unit(0.35, "cm")), color = "navy", size = 1.1, inherit.aes = FALSE
+    arrow = arrow(length = unit(0.35, "cm")), color = "navy", linewidth = 1.1, inherit.aes = FALSE
   ) +
   geom_text(
     data = vecs,
