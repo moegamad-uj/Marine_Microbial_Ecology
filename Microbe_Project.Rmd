@@ -23,33 +23,36 @@ setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
 
 # Import OTU and Taxonomy Tables
 ```{r}
-otu_TO <- read.table("TO_OTU.txt", header=TRUE)
-tax_TO <- read.delim("TO_TAX.txt", header=TRUE)
-tax_TO <- column_to_rownames(tax_TO, "X")
-tax_TO <- as.matrix(tax_TO)
+otu_data <- read.table("TO_OTU.txt", header = TRUE)
+tax_data <- read.delim("TO_TAX.txt", header = TRUE)
+tax_data <- column_to_rownames(tax_data, "X")
+tax_data <- as.matrix(tax_data)
 
-otu_TO <- otu_table(otu_TO, taxa_are_rows = TRUE)
-tax_TO <- tax_table(tax_TO)
-TO <- merge_phyloseq(otu_TO, tax_TO)
+otu_table_obj <- otu_table(otu_data, taxa_are_rows = TRUE)
+tax_table_obj <- tax_table(tax_data)
+phylo_obj <- merge_phyloseq(otu_table_obj, tax_table_obj)
 
 ```
 
 # Load and Merge Metadata
 ```{r}
-META2 <- read.delim("META2.txt", header=TRUE)
-META <- read.delim("ALL_META.txt", header=TRUE)
-META_TO <- merge(META2, META, by="PANGAEA")
-META_TO <- column_to_rownames(META_TO, "PANGAEA")
+meta2_data <- read.delim("META2.txt", header = TRUE)
+meta_data <- read.delim("ALL_META.txt", header = TRUE)
+meta_combined <- merge(meta2_data, meta_data, by = "PANGAEA")
+meta_combined <- column_to_rownames(meta_combined, "PANGAEA")
 
-MAP <- sample_data(META_TO)
-TO1 <- merge_phyloseq(TO, MAP)
+sample_map <- sample_data(meta_combined)
+phylo_complete <- merge_phyloseq(phylo_obj, sample_map)
 
 ```
 
 # Subset: Bacteria Fraction in Trades Biomes
 ```{r}
-TO.bacteria <- subset_taxa(TO1, Kingdom == "Bacteria")
-TO.trades.bac <- subset_samples(TO.bacteria, Marine_pelagic_biomes_Longhurst_2007 == "Trades")
+bacteria_data <- subset_taxa(phylo_complete, Kingdom == "Bacteria")
+trades_bacteria <- subset_samples(
+  bacteria_data, 
+  Marine_pelagic_biomes_Longhurst_2007 == "Trades"
+)
 
 ```
 
@@ -61,17 +64,62 @@ TO.trades.bac.rel.mean <- filter_taxa(TO.trades.bac.rel, function(x) mean(x) > 0
 ```
 # Alpha Diversity  by Ocean Region
 ```{r}
-plot_richness(TO.trades.bac, x = "Ocean_sea_regions", color = "Ocean_sea_regions", measures = c("Shannon", "Chao1")) +
-  labs(title = "Alpha Diversity of Bacterial Communities in Trades Biomes") +
-  theme_minimal()
+# Calculate alpha diversity metrics
+alpha_div <- plot_richness(trades_bacteria, x = "Ocean_sea_regions", measures = c("Shannon", "Chao1"))
+alpha_data <- alpha_div$data
+
+# Create enhanced plot using ggplot2
+ggplot(alpha_data, aes(x = Ocean_sea_regions, y = value, fill = Ocean_sea_regions)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = 21) +
+  geom_jitter(width = 0.2, alpha = 0.5, size = 2) +
+  facet_wrap(~variable, scales = "free_y", nrow = 2) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Alpha Diversity of Bacterial Communities",
+    subtitle = "Trades Biomes across Ocean Regions",
+    x = "Ocean Regions",
+    y = "Diversity Index Value",
+    fill = "Ocean Regions"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12, family = "Arial"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title = element_text(face = "bold"),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold"),
+    legend.position = "right"
+  )
 
 ```
 # Ordination (PCoA)
 ```{r}
+# Perform PCoA ordination
 ord_trades <- ordinate(TO.trades.bac.rel.mean, method = "PCoA", distance = "bray")
+
+# Create enhanced plot
 plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "Ocean_sea_regions") +
-  labs(title = "PCoA: Bacterial Communities in Trades Biomes") +
-  theme_minimal()
+  geom_point(size = 3, alpha = 0.8) +
+  stat_ellipse(type = "norm", linetype = 2, aes(color = Ocean_sea_regions)) +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    title = "Principal Coordinates Analysis (PCoA)",
+    subtitle = "Bacterial Communities in Trades Biomes",
+    x = paste0("PCoA1 [", round(100 * ord_trades$values$Relative_eig[1], 1), "%]"),
+    y = paste0("PCoA2 [", round(100 * ord_trades$values$Relative_eig[2], 1), "%]"),
+    color = "Ocean Regions"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12, family = "Arial"),
+    axis.text = element_text(size = 10),
+    legend.position = "right",
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    panel.grid.minor = element_blank()
+  )
 
 ```
 
@@ -79,44 +127,79 @@ plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "O
 
 # Environmental Fitting with NMDS
 ```{r NMDS_and_envfit_plots, message=FALSE, warning=FALSE}
-# Prepare sample metadata
-sample_df <- data.frame(sample_data(TO.trades.bac.rel.mean))
-
-# Convert OTU table to vegan-compatible matrix
-otu_to_matrix <- function(physeq) {
-  otu <- otu_table(physeq)
-  if (taxa_are_rows(otu)) otu <- t(otu)
-  return(as(otu, "matrix"))
+# Prepare data for NMDS
+otu_matrix <- as(otu_table(TO.trades.bac.rel.mean), "matrix")
+if (taxa_are_rows(otu_table(TO.trades.bac.rel.mean))) {
+  otu_matrix <- t(otu_matrix)
 }
 
-otu_matrix <- otu_to_matrix(TO.trades.bac.rel.mean)
+# Extract metadata
+env_data <- data.frame(sample_data(TO.trades.bac.rel.mean))
+numeric_env <- env_data[, sapply(env_data, is.numeric)]
 
-# Run NMDS using Bray-Curtis distance
-nmds_result <- metaMDS(otu_matrix, distance = "bray", trace = FALSE)
+# Perform NMDS
+set.seed(123)  # for reproducibility
+nmds_result <- metaMDS(otu_matrix, distance = "bray", trymax = 100)
+stress <- round(nmds_result$stress, 3)
 
-# Fit environmental variables
-envfit_result <- envfit(nmds_result, sample_df, permu = 999, na.rm = TRUE)
+# Fit environmental variables only if numeric_env has columns
+if (ncol(numeric_env) > 0) {
+  envfit_result <- envfit(nmds_result, numeric_env, perm = 999)
+# Set up plotting area with adjusted margins
+old_par <- par(no.readonly = TRUE)  # Save original par settings
+par(mar = c(5, 5, 4, 12))  # Increased right margin for legends
+  warning("No numeric environmental variables found for envfit.")
+}
 
-# ---- OPTION 1: Display in Viewer (with resizing) ----
-par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2.5, 1))  # set margins for both plots
+# Set up plotting area with adjusted margins
+par(mar = c(5, 5, 4, 12))  # Increased right margin for legends
 
-# Plot NMDS ordination
-plot(nmds_result, 
-     display = "sites", 
-     main = "NMDS - Trades Biome (Bacteria)",
-     cex = 1.4,              # point size
-     cex.main = 1.6,         # title size
-     cex.lab = 1.3,          # axis label size
-     cex.axis = 1.1)         # tick label size
+# Basic plot
+plot(nmds_result, type = "n",
+     main = paste("NMDS of Bacterial Communities\n(Stress =", stress, ")"),
+     xlab = "NMDS1",
+     ylab = "NMDS2",
+     cex.main = 1.2,
+     cex.lab = 1.1)
 
-# Plot environmental vectors
-plot(envfit_result, 
-     p.max = 0.01, 
-     col = "darkblue", 
-     main = "Environmental Fit (p < 0.01)")
+# Add points with custom styling
+unique_regions <- unique(env_data$Ocean_sea_regions)
+n_colors <- length(unique_regions)
+region_colors <- setNames(colorRampPalette(brewer.pal(min(8, n_colors), "Dark2"))(n_colors), unique_regions)
+points(nmds_result, pch = 21,
+       bg = region_colors[as.character(env_data$Ocean_sea_regions)],
+       cex = 2)
 
-par(mfrow = c(1, 1))  # reset layout
+# Add significant environmental vectors (p < 0.05)
+plot(envfit_result, p.max = 0.05, col = "navy", cex = 0.8)
 
+# Add legend for ocean regions
+legend("topright",
+       pt.bg = colorRampPalette(brewer.pal(8, "Dark2"))(length(unique_regions)),
+       pch = 21,
+       pt.bg = region_colors[unique_regions],
+       cex = 0.8,
+       title = "Ocean Regions",
+       bty = "n",
+       inset = c(-0.3, 0))
+
+# Add legend for environmental variables
+sig_env <- integer(0)
+if (!is.null(envfit_result$vectors)) {
+  sig_env <- which(envfit_result$vectors$pvals <= 0.05)
+}
+if (length(sig_env) > 0) {
+  legend("right",
+         legend = names(numeric_env)[sig_env],
+         col = "navy",
+         lty = 1,
+         cex = 0.8,
+         inset = c(-0.3, 0.5))
+}
+
+# Reset plotting parameters
+par(old_par)  # Restore original par settings
+par(mar = c(5.1, 4.1, 4.1, 2.1))
 
 
 ```
