@@ -1,19 +1,22 @@
 ---
-title: "Bacterial Communities in Trades Biomes"
+title: "Bacterial Diversity Across Trade Biomes"
 author: "Moegamad Uzair Jack"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-# Load Packages
+# Loading Packages
 ```{r}
 library(phyloseq)
 library(tidyverse)
+library(plyr)
 library(vegan)
+library(ggplot2)
+library(grid)
 library(RColorBrewer)
+library(viridis)
 library(pals)
 library(MASS)
-
 ```
 
 # Set Working Directory
@@ -23,143 +26,79 @@ setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
 
 # Import OTU and Taxonomy Tables
 ```{r}
-otu_data <- read.table("TO_OTU.txt", header = TRUE)
-tax_data <- read.delim("TO_TAX.txt", header = TRUE)
-tax_data <- column_to_rownames(tax_data, "X")
-tax_data <- as.matrix(tax_data)
-
-otu_table_obj <- otu_table(otu_data, taxa_are_rows = TRUE)
-tax_table_obj <- tax_table(tax_data)
-phylo_obj <- merge_phyloseq(otu_table_obj, tax_table_obj)
-
+otu_TO <- read.table("TO_OTU.txt", header=TRUE)
+tax_TO <- read.delim("TO_TAX.txt", header=TRUE)
+tax_TO <- column_to_rownames(tax_TO, "X")
+tax_TO <- as.matrix(tax_TO)
+otu_TO <- otu_table(otu_TO, taxa_are_rows = TRUE)
+tax_TO <- tax_table(tax_TO)
+TO <- merge_phyloseq(otu_TO, tax_TO)
 ```
 
 # Load and Merge Metadata
 ```{r}
-meta2_data <- read.delim("META2.txt", header = TRUE)
-meta_data <- read.delim("ALL_META.txt", header = TRUE)
-meta_combined <- merge(meta2_data, meta_data, by = "PANGAEA")
-meta_combined <- column_to_rownames(meta_combined, "PANGAEA")
-
-sample_map <- sample_data(meta_combined)
-phylo_complete <- merge_phyloseq(phylo_obj, sample_map)
-
+META2 <- read.delim("META2.txt", header=TRUE)
+META <- read.delim("ALL_META.txt", header=TRUE)
+META_TO <- merge(META2, META, by="PANGAEA")
+META_TO <- column_to_rownames(META_TO, "PANGAEA")
+MAP <- sample_data(META_TO)
+TO1 <- merge_phyloseq(TO, MAP)
 ```
 
-# Subset: Bacteria Fraction in Trades Biomes
+# Subset Bacteria in Trades Biome and DCM
 ```{r}
-bacteria_data <- subset_taxa(phylo_complete, Kingdom == "Bacteria")
-trades_bacteria <- subset_samples(
-  bacteria_data, 
-  Marine_pelagic_biomes_Longhurst_2007 == "Trades"
-)
-
+TO.bacteria <- subset_taxa(TO1, Kingdom == "Bacteria")
+TO.trades.bac <- subset_samples(TO.bacteria, Marine_pelagic_biomes_Longhurst_2007 == "Trades")
+TO.trades.bac.DCM <- subset_samples(TO.trades.bac, EnvironmentalFeature== "(DCM)")
+TO.trades.bac.DCM <- subset_samples(TO.trades.bac.DCM, !is.na(Mean_Salinity_PSU))
 ```
 
-# Normalise to Relative Abundance
+# Normalize to Relative Abundance
 ```{r}
-bacteria_data <- transform_sample_counts(trades_bacteria, function(x) x / sum(x))
-TO.trades.bac.rel.mean <- filter_taxa(bacteria_data, function(x) mean(x) > 0, TRUE)
-
+TO.trades.bac.DCM.rel <- transform_sample_counts(TO.trades.bac.DCM, function(x) x / sum(x))
+TO.trades.bac.DCM.rel.mean <- filter_taxa(TO.trades.bac.DCM.rel, function(x) mean(x) > 0, TRUE)
 ```
-# Alpha Diversity  by Ocean Region
-```{r}
-# Calculate alpha diversity metrics
-alpha_div <- plot_richness(trades_bacteria, x = "Ocean_sea_regions", measures = c("Shannon", "Chao1"))
-alpha_data <- alpha_div$data
 
-# Create enhanced plot using ggplot2
-ggplot(alpha_data, aes(x = Ocean_sea_regions, y = value, fill = Ocean_sea_regions)) +
-  geom_boxplot(alpha = 0.7, outlier.shape = 21) +
-  geom_jitter(width = 0.2, alpha = 0.5, size = 2) +
-  facet_wrap(~variable, scales = "free_y", nrow = 2) +
-  scale_fill_brewer(palette = "Set2") +
-  labs(
-    title = "Alpha Diversity of Bacterial Communities",
-    subtitle = "Trades Biomes across Ocean Regions",
-    x = "Ocean Regions",
-    y = "Diversity Index Value",
-    fill = "Ocean Regions"
-  ) +
+# Alpha Diversity Comparison
+```{r}
+plot_richness(TO.trades.bac.DCM, x = "Ocean_sea_regions", color = "Ocean_sea_regions", measures = c("Shannon", "Chao1")) +
   theme_minimal() +
-  theme(
-    text = element_text(size = 12, family = "Arial"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    axis.title = element_text(face = "bold"),
-    plot.title = element_text(size = 14, face = "bold"),
-    plot.subtitle = element_text(size = 12, face = "italic"),
-    panel.grid.minor = element_blank(),
-    strip.text = element_text(face = "bold"),
-    legend.position = "right"
-  )
-
+  labs(title = "Alpha Diversity Across Ocean Basins (Trades, DCM)")
 ```
-# Ordination (PCoA)
+
+# Ordination: PCoA
 ```{r}
-# Perform PCoA ordination
-ord_trades <- ordinate(TO.trades.bac.rel.mean, method = "PCoA", distance = "bray")
-
-# Create enhanced plot
-plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "Ocean_sea_regions") +
-  geom_point(size = 3, alpha = 0.8) +
-  stat_ellipse(type = "norm", linetype = 2, aes(color = Ocean_sea_regions)) +
-  scale_color_brewer(palette = "Set2") +
-  labs(
-    title = "Principal Coordinates Analysis (PCoA)",
-    subtitle = "Bacterial Communities in Trades Biomes",
-    x = paste0("PCoA1 [", round(100 * ord_trades$values$Relative_eig[1], 1), "%]"),
-    y = paste0("PCoA2 [", round(100 * ord_trades$values$Relative_eig[2], 1), "%]"),
-    color = "Ocean Regions"
-  ) +
-  theme_minimal() +
-  theme(
-    text = element_text(size = 12, family = "Arial"),
-    axis.text = element_text(size = 10),
-    legend.position = "right",
-    plot.title = element_text(size = 14, face = "bold"),
-    plot.subtitle = element_text(size = 12, face = "italic"),
-    panel.grid.minor = element_blank()
-  )
-
+GP.ord <- ordinate(TO.trades.bac.DCM.rel.mean, method = "PCoA", distance = "bray")
+plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "Mean_Salinity_PSU") +
+  labs(title = "PCoA: Bacterial Communities in Trades (DCM)") +
+  theme_minimal()
 ```
 
-
-
-
-# Relative Abundance of Bacterial Classes
+# Environmental Fitting (NMDS + envfit)
 ```{r}
-# Agglomerate taxa at Class level
-ClassGlommed <- tax_glom(trades_bacteria, taxrank = "Class")
+psv <- data.frame(sample_data(TO.trades.bac.DCM.rel.mean))
+psotu2veg <- function(physeq) {
+  OTU <- otu_table(physeq)
+  if (taxa_are_rows(OTU)) {
+    OTU <- t(OTU)
+  }
+  return(as(OTU, "matrix"))
+}
+ps.otu.veg <- psotu2veg(TO.trades.bac.DCM.rel.mean)
+vare.mds <- metaMDS(ps.otu.veg, trace = FALSE)
+ef <- envfit(vare.mds, psv, permu = 999, na.rm = TRUE)
 
-# Calculate relative abundance
-ClassGlommed <- transform_sample_counts(ClassGlommed, function(x) x / sum(x))
-
-# Get number of unique classes for color palette
-n_classes <- length(unique(tax_table(ClassGlommed)[, "Class"]))
-palette_expanded <- colorRampPalette(brewer.pal(12, "Paired"))(n_classes)
-
-# Create enhanced plot
-plot_bar(ClassGlommed, "Sample_label", fill = "Class") +
-  facet_grid(~Ocean_sea_regions, scales = "free_x", space = "free") +
-  scale_fill_manual(values = palette_expanded) +
-  labs(
-    title = "Relative Abundance of Bacterial Classes",
-    subtitle = "Distribution across Ocean Regions in Trades Biomes",
-    x = "Samples",
-    y = "Relative Abundance",
-    fill = "Bacterial Class"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    panel.grid.minor = element_blank(),
-    strip.text = element_text(face = "bold", size = 12),
-    plot.title = element_text(size = 14, face = "bold"),
-    plot.subtitle = element_text(size = 12, face = "italic"),
-    legend.position = "right",
-    legend.text = element_text(size = 8),
-    axis.title = element_text(face = "bold")
-  )
+par(mfrow = c(1, 2))
+plot(vare.mds, display = "sites", main = "NMDS Ordination")
+plot(ef, p.max = 0.01, main = "Environmental Vector: Salinity")
+par(mfrow = c(1,1))
 ```
 
+# Barplot of Dominant Bacterial Phyla by Ocean
+```{r}
+PhylumGlommed <- tax_glom(TO.trades.bac.DCM.rel.mean, "Phylum")
+plot_bar(PhylumGlommed, "Sample_label", fill = "Phylum", facet_grid = ~Ocean_sea_regions) + 
+  scale_fill_manual(values = colorRampPalette(brewer.pal(8, "Set3"))(length(unique(tax_table(PhylumGlommed)[, "Phylum"])))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom") +
+  labs(title = "Relative Abundance of Bacterial Phyla (Trades, DCM)")
+```
