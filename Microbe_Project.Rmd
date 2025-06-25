@@ -61,17 +61,54 @@ TO.trades.bac.DCM.rel.mean <- filter_taxa(TO.trades.bac.DCM.rel, function(x) mea
 
 # Alpha Diversity Comparison
 ```{r}
-plot_richness(TO.trades.bac.DCM, x = "Ocean_sea_regions", color = "Ocean_sea_regions", measures = c("Shannon", "Chao1")) +
-  theme_minimal() +
-  labs(title = "Alpha Diversity Across Ocean Basins (Trades, DCM)")
+# Calculate alpha diversity metrics
+alpha_div <- plot_richness(TO.trades.bac.DCM, x = "Ocean_sea_regions", 
+              measures = c("Shannon", "Chao1")) + 
+  geom_boxplot(aes(fill = Ocean_sea_regions), alpha = 0.6) +
+  geom_jitter(width = 0.2, alpha = 0.4) +
+  scale_fill_viridis_d() +
+  theme_bw() +
+  theme(
+  axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+  axis.title = element_text(size = 12, face = "bold"),
+  plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+  legend.position = "none",
+  panel.grid.minor = element_blank(),
+  strip.background = element_rect(fill = "white"),
+  strip.text = element_text(face = "bold")
+  ) +
+  labs(
+  title = "Bacterial Alpha Diversity Across Ocean Basins",
+  subtitle = "Trade Wind Biomes at Deep Chlorophyll Maximum",
+  x = "Ocean Region",
+  y = "Alpha Diversity Measure"
+  )
+
+# Print the plot
+alpha_div
 ```
 
 # Ordination: PCoA
 ```{r}
 GP.ord <- ordinate(TO.trades.bac.DCM.rel.mean, method = "PCoA", distance = "bray")
 plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "Mean_Salinity_PSU") +
-  labs(title = "PCoA: Bacterial Communities in Trades (DCM)") +
-  theme_minimal()
+  geom_point(size = 3, alpha = 0.8) +
+  scale_color_viridis_c(name = "Salinity (PSU)") +
+  theme_bw() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    title = "Bacterial Community Structure in Trade Wind Biomes",
+    subtitle = "Principal Coordinates Analysis (PCoA) using Bray-Curtis Dissimilarity",
+    x = "PCoA1",
+    y = "PCoA2"
+  )
 ```
 
 # Environmental Fitting (NMDS + envfit)
@@ -96,9 +133,36 @@ par(mfrow = c(1,1))
 
 # Barplot of Dominant Bacterial Phyla by Ocean
 ```{r}
+# Aggregate at Phylum level and get top 10 phyla
 PhylumGlommed <- tax_glom(TO.trades.bac.DCM.rel.mean, "Phylum")
-plot_bar(PhylumGlommed, "Sample_label", fill = "Phylum", facet_grid = ~Ocean_sea_regions) + 
-  scale_fill_manual(values = colorRampPalette(brewer.pal(8, "Set3"))(length(unique(tax_table(PhylumGlommed)[, "Phylum"])))) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom") +
-  labs(title = "Relative Abundance of Bacterial Phyla (Trades, DCM)")
+top_phyla <- names(sort(taxa_sums(PhylumGlommed), decreasing = TRUE)[1:10])
+PhylumGlommed_filtered <- prune_taxa(top_phyla, PhylumGlommed)
+
+# Create the plot
+ggplot(data = psmelt(PhylumGlommed_filtered), 
+  aes(x = Sample_label, y = Abundance, fill = Phylum)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.8) +
+  facet_grid(~Ocean_sea_regions, scales = "free_x", space = "free") +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(10, "Paired"))(10)) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 10),
+    axis.title = element_text(size = 12, face = "bold"),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(size = 10, face = "bold"),
+    strip.background = element_rect(fill = "white")
+  ) +
+  labs(
+    title = "Bacterial Phylum Composition Across Ocean Regions",
+    subtitle = "Top 10 Most Abundant Phyla in Trade Wind Biomes at DCM",
+    x = "Sample",
+    y = "Relative Abundance"
+  )
 ```
