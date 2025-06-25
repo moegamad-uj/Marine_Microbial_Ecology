@@ -147,7 +147,11 @@ stress <- round(nmds_result$stress, 3)
 if (ncol(numeric_env) > 0) {
   # Ensure rows match between NMDS and environmental data
   numeric_env <- numeric_env[rownames(otu_matrix), ]
-  envfit_result <- envfit(nmds_result, numeric_env, perm = 999)
+  # Remove any remaining NA values
+  complete_cases <- complete.cases(numeric_env)
+  numeric_env <- numeric_env[complete_cases, ]
+  nmds_scores <- scores(nmds_result)[complete_cases, ]
+  envfit_result <- envfit(nmds_scores, numeric_env, perm = 999)
   # Set up plotting area with adjusted margins
   old_par <- par(no.readonly = TRUE)  # Save original par settings
   par(mar = c(5, 5, 4, 12))  # Increased right margin for legends
@@ -155,8 +159,6 @@ if (ncol(numeric_env) > 0) {
   warning("No numeric environmental variables found for envfit.")
 }
 
-# Set up plotting area with adjusted margins
-par(mar = c(5, 5, 4, 12))  # Increased right margin for legends
 
 # Basic plot
 plot(nmds_result, type = "n",
