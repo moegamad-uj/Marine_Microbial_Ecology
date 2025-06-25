@@ -171,8 +171,16 @@ plot(nmds_result, type = "n",
 # Add points with custom styling
 unique_regions <- unique(env_data$Ocean_sea_regions)
 n_colors <- length(unique_regions)
-region_colors <- setNames(colorRampPalette(brewer.pal(min(8, n_colors), "Dark2"))(n_colors), unique_regions)
-points(nmds_result, pch = 21,
+# Create color palette for regions
+color_palette <- colorRampPalette(brewer.pal(min(8, n_colors), "Dark2"))
+region_colors <- setNames(
+  color_palette(n_colors), 
+  unique_regions
+)
+
+# Add points to plot
+points(nmds_result, 
+       pch = 21,
        bg = region_colors[as.character(env_data$Ocean_sea_regions)],
        cex = 2)
 
