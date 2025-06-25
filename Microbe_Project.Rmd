@@ -203,4 +203,40 @@ par(mar = c(5.1, 4.1, 4.1, 2.1))
 
 
 ```
+# Relative Abundance of Bacterial Classes
+```{r}
+# Agglomerate taxa at Class level
+ClassGlommed <- tax_glom(trades_bacteria, taxrank = "Class")
+
+# Calculate relative abundance
+ClassGlommed <- transform_sample_counts(ClassGlommed, function(x) x / sum(x))
+
+# Get number of unique classes for color palette
+n_classes <- length(unique(tax_table(ClassGlommed)[, "Class"]))
+palette_expanded <- colorRampPalette(brewer.pal(12, "Paired"))(n_classes)
+
+# Create enhanced plot
+plot_bar(ClassGlommed, "Sample_label", fill = "Class") +
+  facet_grid(~Ocean_sea_regions, scales = "free_x", space = "free") +
+  scale_fill_manual(values = palette_expanded) +
+  labs(
+    title = "Relative Abundance of Bacterial Classes",
+    subtitle = "Distribution across Ocean Regions in Trades Biomes",
+    x = "Samples",
+    y = "Relative Abundance",
+    fill = "Bacterial Class"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold", size = 12),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    legend.position = "right",
+    legend.text = element_text(size = 8),
+    axis.title = element_text(face = "bold")
+  )
+```
 
