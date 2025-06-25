@@ -250,8 +250,9 @@ ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, color = Mean_Salinity_PSU, shape =
 
 # Barplot of Dominant Bacterial Phyla by Ocean
 ```{r}
-# First identify samples that are truly DCM
-truly_dcm <- subset_samples(TO.trades.bac.DCM.rel.mean, EnvironmentalFeature == "(DCM)")
+# First identify samples that are truly DCM and exclude TARA_100_MES_0.22-3
+truly_dcm <- subset_samples(TO.trades.bac.DCM.rel.mean, EnvironmentalFeature == "(DCM)" & 
+              !Sample_label %in% c("TARA_100_MES_0.22-3"))
 
 # Aggregate at Phylum level and get top 10 phyla using the filtered dataset
 PhylumGlommed <- tax_glom(truly_dcm, "Phylum")
@@ -267,22 +268,22 @@ ggplot(data = psmelt(PhylumGlommed_filtered),
   scale_y_continuous(labels = scales::percent_format()) +
   theme_bw() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-    axis.text.y = element_text(size = 10),
-    axis.title = element_text(size = 12, face = "bold"),
-    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(size = 12, hjust = 0.5),
-    legend.title = element_text(size = 10, face = "bold"),
-    legend.text = element_text(size = 9),
-    legend.position = "right",
-    panel.grid.minor = element_blank(),
-    strip.text = element_text(size = 10, face = "bold"),
-    strip.background = element_rect(fill = "white")
+  axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+  axis.text.y = element_text(size = 10),
+  axis.title = element_text(size = 12, face = "bold"),
+  plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+  plot.subtitle = element_text(size = 12, hjust = 0.5),
+  legend.title = element_text(size = 10, face = "bold"),
+  legend.text = element_text(size = 9),
+  legend.position = "right",
+  panel.grid.minor = element_blank(),
+  strip.text = element_text(size = 10, face = "bold"),
+  strip.background = element_rect(fill = "white")
   ) +
   labs(
-    title = "Bacterial Phylum Composition Across Ocean Regions",
-    subtitle = "Top 15 Most Abundant Phyla in Trade Wind Biomes at DCM",
-    x = "Sample",
-    y = "Relative Abundance"
+  title = "Bacterial Phylum Composition Across Ocean Regions",
+  subtitle = "Top 15 Most Abundant Phyla in Trade Wind Biomes at DCM",
+  x = "Sample",
+  y = "Relative Abundance"
   )
 ```
