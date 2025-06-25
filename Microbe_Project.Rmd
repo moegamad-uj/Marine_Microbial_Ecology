@@ -145,7 +145,7 @@ par(mfrow = c(1,1))
 ```{r}
 # Aggregate at Phylum level and get top 10 phyla
 PhylumGlommed <- tax_glom(TO.trades.bac.DCM.rel.mean, "Phylum")
-top_phyla <- names(sort(taxa_sums(PhylumGlommed), decreasing = TRUE)[1:10])
+top_phyla <- names(sort(taxa_sums(PhylumGlommed), decreasing = TRUE)[1:15])
 PhylumGlommed_filtered <- prune_taxa(top_phyla, PhylumGlommed)
 
 # Create the plot
@@ -153,7 +153,7 @@ ggplot(data = psmelt(PhylumGlommed_filtered),
   aes(x = Sample_label, y = Abundance, fill = Phylum)) +
   geom_bar(stat = "identity", position = "stack", width = 0.8) +
   facet_grid(~Ocean_sea_regions, scales = "free_x", space = "free") +
-  scale_fill_manual(values = colorRampPalette(brewer.pal(10, "Paired"))(10)) +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(15)) +
   scale_y_continuous(labels = scales::percent_format()) +
   theme_bw() +
   theme(
@@ -171,7 +171,7 @@ ggplot(data = psmelt(PhylumGlommed_filtered),
   ) +
   labs(
     title = "Bacterial Phylum Composition Across Ocean Regions",
-    subtitle = "Top 10 Most Abundant Phyla in Trade Wind Biomes at DCM",
+    subtitle = "Top 15 Most Abundant Phyla in Trade Wind Biomes at DCM",
     x = "Sample",
     y = "Relative Abundance"
   )
