@@ -65,11 +65,7 @@ TO.trades.bac.rel.mean <- filter_taxa(bacteria_data, function(x) mean(x) > 0, TR
 # Alpha Diversity  by Ocean Region
 ```{r}
 # Calculate alpha diversity metrics
-alpha_div <- plot_richness(
-  TO.trades.bac.rel.mean,
-  x = "Ocean_sea_regions",
-  measures = c("Shannon", "Chao1")
-)
+alpha_div <- plot_richness(trades_bacteria, x = "Ocean_sea_regions", measures = c("Shannon", "Chao1"))
 alpha_data <- alpha_div$data
 
 # Create enhanced plot using ggplot2
@@ -97,6 +93,7 @@ ggplot(alpha_data, aes(x = Ocean_sea_regions, y = value, fill = Ocean_sea_region
     legend.position = "right"
   )
 
+```
 # Ordination (PCoA)
 ```{r}
 # Perform PCoA ordination
@@ -128,62 +125,11 @@ plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "O
 
 
 
-# Environmental Fitting with NMDS
-```{r NMDS_and_envfit_plots, message=FALSE, warning=FALSE}
-# This ordination shows how much each sample differs from the other composition wise. When we superimpose
-#vectors on it this will tell us how these metadata are positively (pointing towards the sample) or negatively 
-# (pointing directly away from a sample dot) influencing those samples (dots)
 
-psv = data.frame(sample_data(TO.trades.bac.rel.mean))
-
-# convert the sample_data() within a phyloseq object to a vegan compatible data object
-pssd2veg <- function(physeq) {
-  sd <- sample_data(physeq)
-  return(as(sd,"data.frame"))
-}
-
-# convert the otu_table() within a phyloseq object to a vegan compatible data object
-psotu2veg <- function(physeq) {
-  OTU <- otu_table(physeq)
-  if (taxa_are_rows(OTU)) {
-    OTU <- t(OTU)
-  }
-  return(as(OTU, "matrix"))
-}
-
-ps.sd.veg <- pssd2veg(TO.trades.bac.rel.mean)
-ps.otu.veg <- psotu2veg(TO.trades.bac.rel.mean)
-
-vare.dis <- vegdist(ps.otu.veg, method="bray")
-vare.mds <- metaMDS(ps.otu.veg, trace = FALSE)
-vare.mds
-
-data.scores = as.data.frame(scores(vare.mds))
-
-ef <- envfit(vare.mds, psv, permu = 999, na.rm=TRUE)
-ef
-plot(vare.mds, display = "sites")
-plot(ef, p.max = 0.001)
-ordiplot(vare.mds, display = 'sites', type = 'n')
-orditorp(vare.mds, display = 'sites')
-
-# Create enhanced ordination plots with environmental variables
-ord_plot <- plot_ordination(TO.trades.bac.rel.mean, ord_trades, type="samples", color="Ocean_sea_regions")
-ord_plot_depth <- plot_ordination(TO.trades.bac.rel.mean, ord_trades, type="samples", color="Mean_depth")
-
-plot(ord_plot)
-plot(ord_plot_depth)
-
-```
 # Relative Abundance of Bacterial Classes
-class_glommed <- tax_glom(trades_bacteria, taxrank = "Class")
+```{r}
 # Agglomerate taxa at Class level
 ClassGlommed <- tax_glom(trades_bacteria, taxrank = "Class")
-
-# Ensure Sample_label exists in sample data
-if (!"Sample_label" %in% colnames(sample_data(ClassGlommed))) {
-  sample_data(ClassGlommed)$Sample_label <- rownames(sample_data(ClassGlommed))
-}
 
 # Calculate relative abundance
 ClassGlommed <- transform_sample_counts(ClassGlommed, function(x) x / sum(x))
@@ -213,10 +159,6 @@ plot_bar(ClassGlommed, "Sample_label", fill = "Class") +
     plot.subtitle = element_text(size = 12, face = "italic"),
     legend.position = "right",
     legend.text = element_text(size = 8),
-    axis.title = element_text(face = "bold")
-  )
-    axis.title = element_text(face = "bold")
-  )
     axis.title = element_text(face = "bold")
   )
 ```
