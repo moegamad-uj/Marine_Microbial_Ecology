@@ -215,9 +215,7 @@ arrow_mult <- 1.5
 vecs$NMDS1 <- vecs$NMDS1 * arrow_mult
 vecs$NMDS2 <- vecs$NMDS2 * arrow_mult
 
-library(ggplot2)
-library(viridis)
-
+# Create NMDS plot with environmental vectors
 ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, color = Salinity, shape = Region)) +
   geom_point(size = 3, alpha = 0.8) +
   scale_color_viridis(option = "plasma", name = "Salinity (PSU)") +
