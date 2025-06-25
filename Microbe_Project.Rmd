@@ -287,3 +287,48 @@ ggplot(data = psmelt(PhylumGlommed_filtered),
   y = "Relative Abundance"
   )
 ```
+
+# Save Plots
+```{r}
+# Create directory for plots if it doesn't exist
+dir.create("plots", showWarnings = FALSE)
+
+# Alpha diversity plot
+ggsave("plots/alpha_diversity.png", 
+  plot = last_plot(), 
+  width = 12, 
+  height = 8, 
+  dpi = 300)
+
+# PCoA plot
+pcoa_plot <- plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", 
+        color = "Ocean_sea_regions", shape = "Ocean_sea_regions")
+ggsave("plots/pcoa_plot.png", 
+  plot = pcoa_plot, 
+  width = 10, 
+  height = 8, 
+  dpi = 300)
+
+# NMDS plot
+nmds_plot <- plot_ordination(TO.trades.bac.DCM.rel.mean, ord_obj, type = "samples",
+        color = "Ocean_sea_regions", shape = "Ocean_sea_regions")
+ggsave("plots/nmds_plot.png", 
+  plot = nmds_plot, 
+  width = 10, 
+  height = 8, 
+  dpi = 300)
+
+# Environmental fitting plot
+ggsave("plots/envfit_plot.png", 
+  plot = last_plot(), 
+  width = 10, 
+  height = 8, 
+  dpi = 300)
+
+# Phylum composition barplot
+ggsave("plots/phylum_barplot.png", 
+  plot = last_plot(), 
+  width = 15, 
+  height = 8, 
+  dpi = 300)
+```
