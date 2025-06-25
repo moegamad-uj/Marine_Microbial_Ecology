@@ -133,9 +133,10 @@ if (taxa_are_rows(otu_table(TO.trades.bac.rel.mean))) {
   otu_matrix <- t(otu_matrix)
 }
 
-# Extract metadata
+# Extract metadata and handle missing values
 env_data <- data.frame(sample_data(TO.trades.bac.rel.mean))
 numeric_env <- env_data[, sapply(env_data, is.numeric)]
+numeric_env <- na.omit(numeric_env)  # Remove rows with NA values
 
 # Perform NMDS
 set.seed(123)  # for reproducibility
