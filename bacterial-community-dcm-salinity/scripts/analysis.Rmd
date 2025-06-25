@@ -1,5 +1,0 @@
-library(phyloseq)
-library(tidyverse)
-library(vegan)
-library(ggplot2)
-library(RColorBrewer)

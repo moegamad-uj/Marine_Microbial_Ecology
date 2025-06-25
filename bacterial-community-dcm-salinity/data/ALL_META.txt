@@ -1,7 +1,0 @@
-# SampleID    Ocean_sea_regions    EnvironmentalFeature    Mean_Salinity_PSU    Mean_Temperature_degC    Mean_Depth_m    Mean_Lat    Mean_Long    Mean_Oxygen_umolkg    Mean_Nitrates_umolL
-Sample_1    Atlantic_Ocean    (DCM)    35.0    25.0    100.0    10.0    -50.0    200.0    0.5
-Sample_2    Pacific_Ocean    (DCM)    34.5    24.5    150.0    -10.0    -120.0    180.0    0.3
-Sample_3    Indian_Ocean    (DCM)    36.0    26.0    200.0    -20.0    70.0    190.0    0.4
-Sample_4    Atlantic_Ocean    (DCM)    33.5    23.0    120.0    5.0    -60.0    210.0    0.6
-Sample_5    Pacific_Ocean    (DCM)    34.0    25.5    130.0    -15.0    -130.0    175.0    0.2
-Sample_6    Indian_Ocean    (DCM)    35.5    24.0    140.0    -25.0    80.0    185.0    0.5
