@@ -28,7 +28,8 @@ setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
 ```{r}
 otu_TO <- read.table("TO_OTU.txt", header=TRUE)
 tax_TO <- read.delim("TO_TAX.txt", header=TRUE)
-tax_TO <- column_to_rownames(tax_TO, "X")
+rownames(tax_TO) <- tax_TO$X
+tax_TO$X <- NULL
 tax_TO <- as.matrix(tax_TO)
 otu_TO <- otu_table(otu_TO, taxa_are_rows = TRUE)
 tax_TO <- tax_table(tax_TO)
@@ -118,6 +119,7 @@ plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "M
       y = y_lab
   )
 ```
+
 
 # Environmental Fitting (NMDS + envfit)
 ```{r}
