@@ -124,33 +124,21 @@ plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "M
 # Environmental Fitting (NMDS + envfit)
 ```{r}
 psv <- data.frame(sample_data(TO.trades.bac.DCM.rel.mean))
-otu_to_vegan <- function(physeq) {
-  otu_data <- otu_table(physeq)
-  if (taxa_are_rows(otu_data)) {
-    otu_data <- t(otu_data)
+psotu2veg <- function(physeq) {
+  OTU <- otu_table(physeq)
+  if (taxa_are_rows(OTU)) {
+    OTU <- t(OTU)
   }
-  as(otu_data, "matrix")
+  return(as(OTU, "matrix"))
 }
-ps_otu_veg <- otu_to_vegan(TO.trades.bac.DCM.rel.mean)
-vare_mds <- metaMDS(ps_otu_veg, trace = FALSE, autotransform = FALSE)
-# Fit environmental variables from sample metadata (psv) onto NMDS ordination
-# to identify factors (salinity, temperature, etc.) associated with bacterial
-# community structure.
-# Set up plotting parameters for larger, more spread out plots
-op <- par(mfrow = c(1, 2), mar = c(5, 4, 4, 2) + 0.1)
-on.exit(par(op))
+ps.otu.veg <- psotu2veg(TO.trades.bac.DCM.rel.mean)
+vare.mds <- metaMDS(ps.otu.veg, trace = FALSE)
+ef <- envfit(vare.mds, psv, permu = 999, na.rm = TRUE)
 
-# First NMDS plot with expanded limits and larger points
-plot(vare_mds, display = "sites", main = "NMDS Ordination",
-     xlim = c(-2, 2), ylim = c(-2, 2),
-     cex = 1.5, # Increase point size
-     type = "n") # Initially plot without points
-points(vare_mds, display = "sites", cex = 1.5, pch = 19)
-
-# Second plot with environmental vectors
-plot(ef, p.max = 0.01, main = "Environmental Vector: Salinity",
-     xlim = c(-2, 2), ylim = c(-2, 2),
-     cex = 1.5) # Increase arrow and text size
+par(mfrow = c(1, 2))
+plot(vare.mds, display = "sites", main = "NMDS Ordination")
+plot(ef, p.max = 0.01, main = "Environmental Vector: Salinity")
+par(mfrow = c(1,1))
 
 ```
 
