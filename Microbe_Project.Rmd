@@ -2,7 +2,9 @@
 title: "Bacterial Diversity Across Trade Biomes"
 author: "Moegamad Uzair Jack"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 # Loading Packages
