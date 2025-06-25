@@ -98,10 +98,70 @@ pcoa_var <- GP.ord$values$Relative_eig * 100
 x_lab <- paste0("PCoA1 [", round(pcoa_var[1], 1), "%]")
 y_lab <- paste0("PCoA2 [", round(pcoa_var[2], 1), "%]")
 
-# Create enhanced plot
-plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "Mean_Salinity_PSU") +
-  geom_point(size = 3, alpha = 0.8) +
-  scale_color_viridis(option = "plasma", name = "Salinity (PSU)") +
+# Create enhanced plot with ellipses and salinity
+plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", 
+     color = "Ocean_sea_regions", shape = "Ocean_sea_regions") +
+  geom_point(aes(size = Mean_Salinity_PSU), alpha = 0.8) +
+  stat_ellipse(aes(group = Ocean_sea_regions), type = "t", level = 0.95) +
+  scale_color_brewer(palette = "Set1", name = "Ocean Region") +
+  scale_shape_manual(values = c(16, 17, 15, 18, 19), name = "Ocean Region") +
+  scale_size_continuous(name = "Salinity (PSU)") +
+  theme_bw() +
+  theme(
+  axis.text = element_text(size = 12),
+  axis.title = element_text(size = 14, face = "bold"),
+  plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+  plot.subtitle = element_text(size = 12, hjust = 0.5),
+  legend.title = element_text(size = 12, face = "bold"),
+  legend.text = element_text(size = 10),
+  panel.grid.minor = element_blank()
+  ) +
+  labs(
+  title = "Principal Coordinates Analysis of Bacterial Communities",
+  subtitle = "Trade Wind Biomes at Deep Chlorophyll Maximum",
+  x = x_lab,
+  y = y_lab
+  )
+```
+# Beta Diversity Comparison (Ocean_sea_regions)
+```{r}
+# Calculate beta diversity using Bray-Curtis dissimilarity
+gp_dist <- distance(TO.trades.bac.DCM.rel.mean, method = "bray")
+# Extract metadata for PERMANOVA
+metadata <- data.frame(sample_data(TO.trades.bac.DCM.rel.mean))
+# Perform PERMANOVA
+gp_permanova <- adonis2(gp_dist ~ Ocean_sea_regions,
+                       data = metadata,
+                       permutations = 999)
+# Print PERMANOVA results
+print(gp_permanova)
+``` 
+
+
+# NMDS Ordination
+```{r}
+# Convert phyloseq object to matrix for NMDS
+otu_matrix <- as(otu_table(TO.trades.bac.DCM.rel.mean), "matrix")
+if(taxa_are_rows(TO.trades.bac.DCM.rel.mean)) {
+    otu_matrix <- t(otu_matrix)
+}
+
+# Perform NMDS ordination
+nmds_result <- metaMDS(otu_matrix, distance = "bray", k = 2, trymax = 100, trace = FALSE)
+
+# Create ordination object compatible with phyloseq
+nmds_coords <- data.frame(nmds_result$points)
+rownames(nmds_coords) <- sample_names(TO.trades.bac.DCM.rel.mean)
+ord_obj <- ordinate(TO.trades.bac.DCM.rel.mean, "NMDS", distance = "bray")
+
+# Create NMDS plot with ellipses and salinity
+plot_ordination(TO.trades.bac.DCM.rel.mean, ord_obj, type = "samples",
+                color = "Ocean_sea_regions", shape = "Ocean_sea_regions") +
+  geom_point(aes(size = Mean_Salinity_PSU), alpha = 0.8) +
+  stat_ellipse(aes(group = Ocean_sea_regions), type = "t", level = 0.95) +
+  scale_color_brewer(palette = "Set1", name = "Ocean Region") +
+  scale_shape_manual(values = c(16, 17, 15, 18, 19), name = "Ocean Region") +
+  scale_size_continuous(name = "Salinity (PSU)") +
   theme_bw() +
   theme(
     axis.text = element_text(size = 12),
@@ -113,32 +173,60 @@ plot_ordination(TO.trades.bac.DCM.rel.mean, GP.ord, type = "samples", color = "M
     panel.grid.minor = element_blank()
   ) +
   labs(
-    title = "Principal Coordinates Analysis of Bacterial Communities",
+    title = "NMDS Ordination of Bacterial Communities",
     subtitle = "Trade Wind Biomes at Deep Chlorophyll Maximum",
-      x = x_lab,
-      y = y_lab
+    x = x_lab,
+    y = y_lab
   )
-```
-
+  ```
 
 # Environmental Fitting (NMDS + envfit)
-```{r}
-psv <- data.frame(sample_data(TO.trades.bac.DCM.rel.mean))
-psotu2veg <- function(physeq) {
-  OTU <- otu_table(physeq)
-  if (taxa_are_rows(OTU)) {
-    OTU <- t(OTU)
-  }
-  return(as(OTU, "matrix"))
-}
-ps.otu.veg <- psotu2veg(TO.trades.bac.DCM.rel.mean)
-vare.mds <- metaMDS(ps.otu.veg, trace = FALSE)
-ef <- envfit(vare.mds, psv, permu = 999, na.rm = TRUE)
+```{r, fig.width=12, fig.height=6}
+# Calculate NMDS stress for subtitle
+nmds_stress <- round(vare.mds$stress, 3)
 
-par(mfrow = c(1, 2))
-plot(vare.mds, display = "sites", main = "NMDS Ordination")
-plot(ef, p.max = 0.01, main = "Environmental Vector: Salinity")
-par(mfrow = c(1,1))
+# Only plot significant vectors (p < 0.05)
+sig_vec <- ef$vectors$pvals < 0.05
+vecs <- as.data.frame(ef$vectors$arrows[sig_vec, , drop = FALSE])
+vecs$var <- rownames(vecs)
+arrow_mult <- 1.5
+vecs$NMDS1 <- vecs$NMDS1 * arrow_mult
+vecs$NMDS2 <- vecs$NMDS2 * arrow_mult
+
+library(ggplot2)
+library(viridis)
+
+ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2, color = Mean_Salinity_PSU, shape = Ocean_sea_regions)) +
+  geom_point(size = 3.5, alpha = 0.85, stroke = 0.2) +
+  scale_color_viridis(option = "plasma", name = "Salinity (PSU)", direction = -1) +
+  scale_shape_manual(values = c(16, 17, 15, 18, 19), name = "Ocean Region") +
+  geom_segment(
+    data = vecs,
+    aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2),
+    arrow = arrow(length = unit(0.35, "cm")), color = "navy", size = 1.1, inherit.aes = FALSE
+  ) +
+  geom_text(
+    data = vecs,
+    aes(x = NMDS1 * 1.12, y = NMDS2 * 1.12, label = var),
+    color = "navy", size = 5, fontface = "bold", hjust = 0.5, inherit.aes = FALSE
+  ) +
+  theme_classic(base_size = 16) +
+  labs(
+    title = "NMDS Ordination with Significant Environmental Vectors",
+    subtitle = paste0("Trade Wind Biomes at Deep Chlorophyll Maximum (Stress = ", nmds_stress, ")"),
+    x = "NMDS1",
+    y = "NMDS2",
+    caption = "Arrows indicate significant (p < 0.05) environmental variables."
+  ) +
+  theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 14, hjust = 0.5),
+    axis.title = element_text(size = 16, face = "bold"),
+    axis.text = element_text(size = 14),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.position = "right"
+  )
 
 ```
 
