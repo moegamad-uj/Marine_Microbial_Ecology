@@ -1,0 +1,14 @@
+# Taxonomy Table for Bacterial OTUs
+
+# This file contains the taxonomy classifications for the Operational Taxonomic Units (OTUs) listed in the TO_OTU.txt file.
+# The format is as follows:
+# OTU_ID    Kingdom    Phylum    Class    Order    Family    Genus    Species
+# Each row corresponds to an OTU and its respective taxonomic classification.
+
+OTU_ID    Kingdom    Phylum    Class    Order    Family    Genus    Species
+OTU_1     Bacteria   Proteobacteria    Gammaproteobacteria    Enterobacterales    Enterobacteriaceae    Escherichia    Escherichia coli
+OTU_2     Bacteria   Firmicutes    Bacilli    Lactobacillales    Lactobacillaceae    Lactobacillus    Lactobacillus acidophilus
+OTU_3     Bacteria   Actinobacteria    Actinobacteria    Actinomycetales    Micrococcaceae    Micrococcus    Micrococcus luteus
+OTU_4     Bacteria   Bacteroidetes    Bacteroidia    Bacteroidales    Bacteroidaceae    Bacteroides    Bacteroides fragilis
+OTU_5     Bacteria   Cyanobacteria    Cyanophyceae    Chroococcales    Chroococcaceae    Synechococcus    Synechococcus elongatus
+# Add more OTUs as necessary for your analysis.
