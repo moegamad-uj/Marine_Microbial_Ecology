@@ -129,7 +129,7 @@ plot_ordination(TO.trades.bac.rel.mean, ord_trades, type = "samples", color = "O
 ```{r NMDS_and_envfit_plots, message=FALSE, warning=FALSE}
 # Prepare data for NMDS
 otu_matrix <- as(otu_table(TO.trades.bac.rel.mean), "matrix")
-if (taxa_are_rows(otu_table(TO.trades.bac.rel.mean))) {
+if (taxa_are_rows(TO.trades.bac.rel.mean)) {
   otu_matrix <- t(otu_matrix)
 }
 
@@ -139,26 +139,13 @@ numeric_env <- env_data[, sapply(env_data, is.numeric)]
 numeric_env <- na.omit(numeric_env)  # Remove rows with NA values
 
 # Perform NMDS
-set.seed(123)  # for reproducibility
+set.seed(123)
 nmds_result <- metaMDS(otu_matrix, distance = "bray", trymax = 100)
 stress <- round(nmds_result$stress, 3)
 
-# Fit environmental variables only if numeric_env has columns
-if (ncol(numeric_env) > 0) {
-  # Ensure rows match between NMDS and environmental data
-  numeric_env <- numeric_env[rownames(otu_matrix), ]
-  # Remove any remaining NA values
-  complete_cases <- complete.cases(numeric_env)
-  numeric_env <- numeric_env[complete_cases, ]
-  nmds_scores <- scores(nmds_result)[complete_cases, ]
-  envfit_result <- envfit(nmds_scores, numeric_env, perm = 999)
-  # Set up plotting area with adjusted margins
-  old_par <- par(no.readonly = TRUE)  # Save original par settings
-  par(mar = c(5, 5, 4, 12))  # Increased right margin for legends
-} else {
-  warning("No numeric environmental variables found for envfit.")
-}
-
+# Store original plotting parameters
+old_par <- par(no.readonly = TRUE)
+par(mar = c(5, 5, 4, 12))
 
 # Basic plot
 plot(nmds_result, type = "n",
@@ -173,47 +160,46 @@ unique_regions <- unique(env_data$Ocean_sea_regions)
 n_colors <- length(unique_regions)
 # Create color palette for regions
 color_palette <- colorRampPalette(brewer.pal(min(8, n_colors), "Dark2"))
-region_colors <- setNames(
-  color_palette(n_colors), 
-  unique_regions
-)
+region_colors <- setNames(color_palette(n_colors), unique_regions)
 
 # Add points to plot
-points(nmds_result, 
+points(nmds_result,
        pch = 21,
        bg = region_colors[as.character(env_data$Ocean_sea_regions)],
        cex = 2)
+
+# Fit environmental variables
+nmds_scores <- scores(nmds_result)
+envfit_result <- envfit(nmds_scores, numeric_env, perm = 999)
 
 # Add significant environmental vectors (p < 0.05)
 plot(envfit_result, p.max = 0.05, col = "navy", cex = 0.8)
 
 # Add legend for ocean regions
 legend("topright",
-       pt.bg = colorRampPalette(brewer.pal(8, "Dark2"))(length(unique_regions)),
+       legend = unique_regions,
        pch = 21,
-       pt.bg = region_colors[unique_regions],
+       pt.bg = region_colors,
        cex = 0.8,
        title = "Ocean Regions",
        bty = "n",
        inset = c(-0.3, 0))
 
 # Add legend for environmental variables
-sig_env <- integer(0)
 if (!is.null(envfit_result$vectors)) {
   sig_env <- which(envfit_result$vectors$pvals <= 0.05)
-}
-if (length(sig_env) > 0) {
-  legend("right",
-         legend = names(numeric_env)[sig_env],
-         col = "navy",
-         lty = 1,
-         cex = 0.8,
-         inset = c(-0.3, 0.5))
+  if (length(sig_env) > 0) {
+    legend("right",
+           legend = names(numeric_env)[sig_env],
+           col = "navy",
+           lty = 1,
+           cex = 0.8,
+           inset = c(-0.3, 0.5))
+  }
 }
 
 # Reset plotting parameters
-par(old_par)  # Restore original par settings
-par(mar = c(5.1, 4.1, 4.1, 2.1))
+par(old_par)
 
 
 ```
