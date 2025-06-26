@@ -365,45 +365,29 @@ nutrient_data <- data.frame(
   Nitrates = npo_env$Mean_Nitrates_umolL
 )
 
-# Modify plot_shared_theme
+# Create shared theme
 plot_shared_theme <- theme_bw() +
   theme(
-    axis.text.x = element_text(angle = 15, hjust = 0.8),  # Better angle for readability
-    plot.title = element_text(size = 9, face = "bold"), # Larger title
+    axis.text.x = element_text(angle = 15, hjust = 0.8),
+    plot.title = element_text(size = 9, face = "bold"),
     panel.grid.minor = element_blank(),
-    plot.subtitle = element_text(size = 10, color = "darkgray")  # Add subtitle for context
+    plot.subtitle = element_text(size = 10, color = "darkgray"),
+    legend.position = "none"
   )
 
-# Add reference ranges to plots
-p1 <- p1 +
-  geom_hline(yintercept = c(100, 150), linetype = "dashed", color = "gray50") +
-  annotate("text", x = 1.5, y = 155, label = "Typical range", size = 3)
-
-p2 <- p2 +
-  geom_hline(yintercept = c(5, 15), linetype = "dashed", color = "gray50") +
-  annotate("text", x = 1.5, y = 16, label = "Typical range", size = 3)
-
-# Oxygen plot
+# Create oxygen plot
 p1 <- ggplot(nutrient_data, aes(x = Sample, y = Oxygen, fill = Sample)) +
   geom_bar(stat = "identity", width = 0.7) +
-  plot_shared_theme +
   scale_fill_brewer(palette = "Set2") +
-  labs(
-    title = "Oxygen Levels",
-    y = "Oxygen (μmol/kg)"
-  ) +
-  theme(legend.position = "none")
+  labs(title = "Oxygen Levels", y = "Oxygen (μmol/kg)") +
+  plot_shared_theme
 
-# Nitrate plot
+# Create nitrate plot
 p2 <- ggplot(nutrient_data, aes(x = Sample, y = Nitrates, fill = Sample)) +
   geom_bar(stat = "identity", width = 0.7) +
-  plot_shared_theme +
   scale_fill_brewer(palette = "Set2") +
-  labs(
-    title = "Nitrate Levels",
-    y = "Nitrates (μmol/L)"
-  ) +
-  theme(legend.position = "none")
+  labs(title = "Nitrate Levels", y = "Nitrates (μmol/L)") +
+  plot_shared_theme
 
 # Combine plots
 library(gridExtra)
