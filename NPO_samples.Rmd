@@ -350,8 +350,12 @@ library(sf)
 # Get world map data
 world_map <- map_data("world")
 
-# Calculate buffer around points for zoom - increased for wider view
-buffer <- 30  # increased from 10 to 30 degrees
+# Calculate buffer and bounds for zoom
+buffer <- 30  # degrees
+zoom_bounds <- list(
+  long = c(min(npo_geo$Mean_Long) - buffer, max(npo_geo$Mean_Long) + buffer),
+  lat = c(min(npo_geo$Mean_Lat) - buffer, max(npo_geo$Mean_Lat) + buffer)
+)
 
 # Create zoomed map with wider view
 ggplot() +
@@ -362,11 +366,11 @@ ggplot() +
   # Add NPO sample points
   geom_point(data = npo_geo, 
              aes(x = Mean_Long, y = Mean_Lat, color = Sample_label),
-             size = 4, alpha = 0.8) +  # slightly smaller points for broader view
+             size = 4, alpha = 0.8) +
   # Add sample labels
   geom_text(data = npo_geo,
             aes(x = Mean_Long, y = Mean_Lat, label = Sample_label),
-            vjust = -1.5, size = 3, fontface = "bold") +  # smaller text for better fit
+            vjust = -1.5, size = 3, fontface = "bold") +
   # Styling
   theme_bw() +
   theme(
@@ -387,17 +391,18 @@ ggplot() +
   scale_color_brewer(palette = "Set2") +
   # Set wider boundaries
   coord_cartesian(
-    xlim = c(min(npo_geo$Mean_Long) - buffer, max(npo_geo$Mean_Long) + buffer),
-    ylim = c(min(npo_geo$Mean_Lat) - buffer, max(npo_geo$Mean_Lat) + buffer)
+    xlim = zoom_bounds$long,
+    ylim = zoom_bounds$lat
   ) +
   # Add graticules with wider spacing
   scale_x_continuous(breaks = seq(floor(zoom_bounds$long[1]), 
                                 ceiling(zoom_bounds$long[2]), 
-                                by = 10)) +  # increased from 5 to 10
+                                by = 10)) +
   scale_y_continuous(breaks = seq(floor(zoom_bounds$lat[1]), 
                                 ceiling(zoom_bounds$lat[2]), 
-                                by = 10))    # increased from 5 to 10
+                                by = 10))
 
 ggsave("plots/npo_regional_map.png", 
        width = 12, height = 8, dpi = 300)
+
 ```
