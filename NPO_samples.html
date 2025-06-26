@@ -574,6 +574,78 @@ if(nsamples(npo_samples) &gt; 2) {
     )
 }</code></pre>
 </div>
+<div id="statistical-analysis-of-environmental-drivers" class="section level1">
+<h1>Statistical Analysis of Environmental Drivers</h1>
+<p>Interpretation Guidelines: Magnitude (Absolute Value): |±0.5|: Small
+difference |±1.0|: Moderate difference |±2.0|: Large difference</p>
+<pre class="r"><code># Test which environmental variables best explain community differences
+# Note: With only 2 samples, statistical power is limited, but we can examine patterns
+
+# Create environmental distance matrix
+env_vars_for_analysis &lt;- c(&quot;Mean_Temperature_degC&quot;, &quot;Mean_Salinity_PSU&quot;, 
+                          &quot;Mean_Oxygen_umolkg&quot;, &quot;Mean_Nitrates_umolL&quot;)
+npo_env_subset &lt;- npo_env[, env_vars_for_analysis]
+
+# Calculate environmental distances
+env_dist &lt;- dist(scale(npo_env_subset), method = &quot;euclidean&quot;)
+
+# Mantel test to compare environmental and community distances
+mantel_result &lt;- mantel(npo_dist, env_dist, method = &quot;pearson&quot;, permutations = 999)</code></pre>
+<pre><code>## &#39;nperm&#39; &gt;= set of all permutations: complete enumeration.</code></pre>
+<pre><code>## Set of permutations &lt; &#39;minperm&#39;. Generating entire set.</code></pre>
+<pre class="r"><code>print(&quot;Mantel Test Results (Community vs Environment):&quot;)</code></pre>
+<pre><code>## [1] &quot;Mantel Test Results (Community vs Environment):&quot;</code></pre>
+<pre class="r"><code>print(mantel_result)</code></pre>
+<pre><code>## 
+## Mantel statistic based on Pearson&#39;s product-moment correlation 
+## 
+## Call:
+## mantel(xdis = npo_dist, ydis = env_dist, method = &quot;pearson&quot;,      permutations = 999) 
+## 
+## Mantel statistic r:    NA 
+##       Significance: NA 
+## 
+## Upper quantiles of permutations (null model):
+##   90%   95% 97.5%   99% 
+##    NA    NA    NA    NA 
+## Permutation: free
+## Number of permutations: 1</code></pre>
+<pre class="r"><code># Individual variable correlations with community dissimilarity
+env_correlations &lt;- sapply(env_vars_for_analysis, function(var) {
+  var_diff &lt;- abs(diff(npo_env[, var]))
+  return(var_diff)
+})
+
+print(&quot;Environmental Variable Differences:&quot;)</code></pre>
+<pre><code>## [1] &quot;Environmental Variable Differences:&quot;</code></pre>
+<pre class="r"><code>print(env_correlations)</code></pre>
+<pre><code>## Mean_Temperature_degC     Mean_Salinity_PSU    Mean_Oxygen_umolkg 
+##                   0.4                   0.2                  18.4 
+##   Mean_Nitrates_umolL 
+##                  11.1</code></pre>
+<pre class="r"><code># Rank variables by their potential influence
+env_importance &lt;- data.frame(
+  Variable = names(env_correlations),
+  Absolute_Difference = env_correlations,
+  Standardized_Difference = scale(env_correlations)[,1]
+)
+
+env_importance &lt;- env_importance[order(abs(env_importance$Standardized_Difference), decreasing = TRUE),]
+
+print(&quot;Environmental Variables Ranked by Difference:&quot;)</code></pre>
+<pre><code>## [1] &quot;Environmental Variables Ranked by Difference:&quot;</code></pre>
+<pre class="r"><code>print(env_importance)</code></pre>
+<pre><code>##                                    Variable Absolute_Difference
+## Mean_Oxygen_umolkg       Mean_Oxygen_umolkg                18.4
+## Mean_Salinity_PSU         Mean_Salinity_PSU                 0.2
+## Mean_Temperature_degC Mean_Temperature_degC                 0.4
+## Mean_Nitrates_umolL     Mean_Nitrates_umolL                11.1
+##                       Standardized_Difference
+## Mean_Oxygen_umolkg                  1.2275082
+## Mean_Salinity_PSU                  -0.8268044
+## Mean_Temperature_degC              -0.8042295
+## Mean_Nitrates_umolL                 0.4035257</code></pre>
+</div>
 <div id="bacterial-community-composition-analysis" class="section level1">
 <h1>Bacterial Community Composition Analysis</h1>
 <pre class="r"><code># Compare at Class level
