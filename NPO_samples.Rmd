@@ -1,0 +1,378 @@
+---
+title: "NPO Sample Analysis: Understanding Differences in Bacterial Communities"
+author: "Moegamad Uzair Jack"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  word_document: default
+---
+
+# Loading Packages
+```{r setup, message=FALSE, warning=FALSE}
+library(phyloseq)
+library(tidyverse)
+library(vegan)
+library(ggplot2)
+library(RColorBrewer)
+library(viridis)
+library(reshape2)
+library(scales)
+```
+
+# Set Working Directory and Load Data
+```{r}
+setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
+
+# Load your processed phyloseq objects from the main analysis
+# (Assuming you've run the main analysis first)
+# If not, you'll need to run the data import and processing steps here
+```
+
+# Extract NPO Samples for Analysis
+```{r}
+# Extract only NPO samples
+npo_samples <- subset_samples(TO.trades.bac.DCM.rel.mean, Ocean_sea_regions == "NPO")
+npo_meta <- data.frame(sample_data(npo_samples))
+
+print("NPO Sample Information:")
+print(npo_meta[, c("Sample_label", "Ocean_sea_regions")])
+print(paste("Number of NPO samples:", nsamples(npo_samples)))
+```
+
+# Environmental Variable Comparison
+```{r}
+# Compare environmental variables between NPO samples
+env_vars_compare <- c("Mean_Lat", "Mean_Long", "Mean_Depth_m", "Mean_Temperature_degC",
+                     "Mean_Salinity_PSU", "Mean_Oxygen_umolkg", "Mean_Nitrates_umolL")
+
+npo_env <- npo_meta[, env_vars_compare]
+rownames(npo_env) <- npo_meta$Sample_label
+
+print("NPO Environmental Conditions:")
+print(npo_env)
+
+# Calculate differences between samples
+if(nrow(npo_env) == 2) {
+  env_differences <- abs(npo_env[1,] - npo_env[2,])
+  print("Environmental Differences Between NPO Samples:")
+  print(env_differences)
+}
+```
+
+# Visualize Environmental Differences
+```{r}
+# Prepare data for visualization
+npo_env$Sample <- rownames(npo_env)
+npo_long <- melt(npo_env, id.vars = "Sample")
+
+# Plot environmental differences
+ggplot(npo_long, aes(x = variable, y = value, fill = Sample)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+  facet_wrap(~variable, scales = "free", ncol = 3) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  ) +
+  labs(
+    title = "Environmental Differences Between NPO Samples",
+    subtitle = "Comparison of Key Environmental Variables",
+    x = "",
+    y = "Value"
+  ) +
+  scale_fill_brewer(palette = "Set2")
+
+ggsave("plots/npo_environmental_comparison.png", 
+       width = 12, height = 8, dpi = 300)
+```
+
+# Alpha Diversity Comparison
+```{r}
+# Calculate alpha diversity for NPO samples
+npo_alpha <- estimate_richness(npo_samples, measures = c("Shannon", "Chao1", "Simpson"))
+npo_alpha$Sample <- rownames(npo_alpha)
+
+print("Alpha Diversity Comparison:")
+print(npo_alpha)
+
+# Visualize alpha diversity differences
+npo_alpha_long <- melt(npo_alpha, id.vars = "Sample")
+
+ggplot(npo_alpha_long, aes(x = Sample, y = value, fill = Sample)) +
+  geom_bar(stat = "identity", alpha = 0.8) +
+  facet_wrap(~variable, scales = "free") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold"),
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Alpha Diversity Comparison: NPO Samples",
+    x = "Sample",
+    y = "Diversity Index Value"
+  ) +
+  scale_fill_brewer(palette = "Set2")
+
+ggsave("plots/npo_alpha_diversity.png", 
+       width = 10, height = 6, dpi = 300)
+```
+
+# Beta Diversity Analysis
+```{r}
+# Calculate Bray-Curtis dissimilarity between NPO samples
+npo_dist <- distance(npo_samples, method = "bray")
+
+print("Bray-Curtis Dissimilarity Between NPO Samples:")
+print(as.matrix(npo_dist))
+
+# If you have more than 2 NPO samples, create a heatmap
+if(nsamples(npo_samples) > 2) {
+  dist_matrix <- as.matrix(npo_dist)
+  dist_melt <- melt(dist_matrix)
+  
+  ggplot(dist_melt, aes(Var1, Var2, fill = value)) +
+    geom_tile() +
+    scale_fill_viridis_c(name = "Bray-Curtis\nDissimilarity") +
+    theme_minimal() +
+    labs(
+      title = "Bray-Curtis Dissimilarity Matrix: NPO Samples",
+      x = "Sample",
+      y = "Sample"
+    )
+}
+```
+
+# Bacterial Community Composition Analysis
+```{r}
+# Compare at Phylum level
+npo_phylum <- tax_glom(npo_samples, "Phylum")
+npo_phylum_melt <- psmelt(npo_phylum)
+
+# Get top 10 phyla for better visualization
+top_phyla_npo <- npo_phylum_melt %>%
+  group_by(Phylum) %>%
+  summarise(mean_abundance = mean(Abundance)) %>%
+  arrange(desc(mean_abundance)) %>%
+  head(10) %>%
+  pull(Phylum)
+
+npo_phylum_filtered <- npo_phylum_melt %>%
+  filter(Phylum %in% top_phyla_npo)
+
+# Plot phylum differences
+ggplot(npo_phylum_filtered, aes(x = Sample, y = Abundance, fill = Phylum)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(10, "Paired"))(10)) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  ) +
+  labs(
+    title = "Top 10 Bacterial Phyla Composition: NPO Samples",
+    subtitle = "Relative Abundance Comparison",
+    x = "NPO Samples",
+    y = "Relative Abundance"
+  )
+
+ggsave("plots/npo_phylum_composition.png", 
+       width = 12, height = 8, dpi = 300)
+```
+
+# Genus-Level Analysis
+```{r}
+# Compare at Genus level for more detail
+npo_genus <- tax_glom(npo_samples, "Genus")
+top_genera_npo <- names(sort(taxa_sums(npo_genus), decreasing = TRUE)[1:20])
+npo_genus_filt <- prune_taxa(top_genera_npo, npo_genus)
+npo_genus_melt <- psmelt(npo_genus_filt)
+
+ggplot(npo_genus_melt, aes(x = Sample, y = Abundance, fill = Genus)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(20)) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.text = element_text(size = 8),
+    legend.key.size = unit(0.3, "cm")
+  ) +
+  labs(
+    title = "Top 20 Bacterial Genera Composition: NPO Samples",
+    subtitle = "Detailed Taxonomic Comparison",
+    x = "NPO Samples",
+    y = "Relative Abundance"
+  )
+
+ggsave("plots/npo_genus_composition.png", 
+       width = 14, height = 10, dpi = 300)
+```
+
+# Differential Abundance Analysis
+```{r}
+# Simple fold-change analysis between NPO samples
+if(nsamples(npo_samples) == 2) {
+  npo_otu <- as.data.frame(otu_table(npo_samples))
+  
+  # Calculate log2 fold changes
+  if(taxa_are_rows(npo_samples)) {
+    fold_changes <- log2((npo_otu[,1] + 1e-6) / (npo_otu[,2] + 1e-6))
+  } else {
+    fold_changes <- log2((npo_otu[1,] + 1e-6) / (npo_otu[2,] + 1e-6))
+  }
+  
+  # Get taxonomy for interpretation
+  tax_df <- data.frame(tax_table(npo_samples))
+  diff_taxa <- data.frame(
+    Taxa = rownames(tax_df),
+    Phylum = tax_df$Phylum,
+    Class = tax_df$Class,
+    Genus = tax_df$Genus,
+    Log2FoldChange = fold_changes
+  )
+  
+  # Show most different taxa
+  diff_taxa_sorted <- diff_taxa[order(abs(diff_taxa$Log2FoldChange), decreasing = TRUE),]
+  
+  print("Top 20 Most Differentially Abundant Taxa Between NPO Samples:")
+  print(head(diff_taxa_sorted, 20))
+  
+  # Visualize top differential taxa
+  top_diff <- head(diff_taxa_sorted, 15)
+  top_diff$Direction <- ifelse(top_diff$Log2FoldChange > 0, "Higher in Sample 1", "Higher in Sample 2")
+  
+  ggplot(top_diff, aes(x = reorder(Genus, abs(Log2FoldChange)), y = Log2FoldChange, fill = Direction)) +
+    geom_bar(stat = "identity") +
+    coord_flip() +
+    scale_fill_manual(values = c("steelblue", "coral")) +
+    theme_bw() +
+    labs(
+      title = "Top 15 Differentially Abundant Genera Between NPO Samples",
+      subtitle = "Log2 Fold Change (Sample 1 vs Sample 2)",
+      x = "Genus",
+      y = "Log2 Fold Change",
+      fill = "Abundance Pattern"
+    )
+  
+  ggsave("plots/npo_differential_abundance.png", 
+         width = 12, height = 8, dpi = 300)
+}
+```
+
+# Geographic Analysis
+```{r}
+# Analyze geographic and sampling differences
+npo_geo <- npo_meta[, c("Mean_Lat", "Mean_Long", "Sample_label")]
+
+print("NPO Sample Geographic Locations:")
+print(npo_geo)
+
+# Calculate geographic distance if 2 samples
+if(nrow(npo_geo) == 2) {
+  lat_diff <- abs(npo_geo$Mean_Lat[1] - npo_geo$Mean_Lat[2])
+  long_diff <- abs(npo_geo$Mean_Long[1] - npo_geo$Mean_Long[2])
+  
+  # Approximate distance calculation (rough estimate)
+  geo_distance <- sqrt(lat_diff^2 + long_diff^2) * 111 # Convert to km
+  
+  print(paste("Latitude difference:", round(lat_diff, 2), "degrees"))
+  print(paste("Longitude difference:", round(long_diff, 2), "degrees"))
+  print(paste("Approximate distance:", round(geo_distance, 0), "km"))
+}
+
+# Plot sample locations
+ggplot(npo_geo, aes(x = Mean_Long, y = Mean_Lat, color = Sample_label)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = Sample_label), vjust = -1) +
+  theme_bw() +
+  labs(
+    title = "Geographic Locations of NPO Samples",
+    x = "Longitude",
+    y = "Latitude",
+    color = "Sample"
+  ) +
+  scale_color_brewer(palette = "Set2")
+
+ggsave("plots/npo_geographic_locations.png", 
+       width = 10, height = 6, dpi = 300)
+```
+
+# Environmental-Community Correlation
+```{r}
+# Test correlation between environmental and community differences
+if(nsamples(npo_samples) == 2) {
+  # Environmental distance
+  env_distance <- dist(npo_meta[, env_vars_compare])
+  
+  # Community distance
+  community_distance <- npo_dist
+  
+  print("Environmental vs Community Distance Correlation:")
+  if(length(env_distance) > 0 && length(community_distance) > 0) {
+    correlation <- cor.test(as.numeric(env_distance), as.numeric(community_distance))
+    print(correlation)
+  }
+  
+  # Identify which environmental variables might explain the differences
+  env_diff_summary <- data.frame(
+    Variable = names(env_differences),
+    Difference = as.numeric(env_differences),
+    Relative_Difference = as.numeric(env_differences) / apply(npo_env[,1:7], 2, mean)
+  )
+  
+  print("Environmental Variable Differences (Ranked by Relative Change):")
+  print(env_diff_summary[order(abs(env_diff_summary$Relative_Difference), decreasing = TRUE),])
+}
+```
+
+# Summary and Conclusions
+```{r}
+cat("
+## Summary of NPO Sample Analysis
+
+### Key Findings:
+1. Environmental Differences: 
+   - [Describe the main environmental differences found]
+   
+2. Community Composition:
+   - [Summarize the main bacterial community differences]
+   
+3. Alpha Diversity:
+   - [Compare diversity patterns between samples]
+   
+4. Geographic Factors:
+   - [Discuss geographic distance and its potential influence]
+
+### Potential Explanations:
+- Environmental gradients (salinity, temperature, nutrients)
+- Geographic distance effects
+- Local oceanographic conditions
+- Different water masses
+
+### Next Steps:
+- Investigate specific environmental drivers
+- Compare with other regions
+- Consider temporal variation if applicable
+")
+```
+
+# Create Summary Report
+```{r}
+# Create a summary table of all findings
+if(exists("env_diff_summary") && exists("npo_alpha")) {
+  summary_report <- list(
+    "Sample_Count" = nsamples(npo_samples),
+    "Geographic_Distance_km" = if(exists("geo_distance")) round(geo_distance, 0) else "Not calculated",
+    "Community_Dissimilarity" = round(as.numeric(npo_dist), 3),
+    "Top_Environmental_Driver" = env_diff_summary$Variable[which.max(abs(env_diff_summary$Relative_Difference))],
+    "Diversity_Difference" = round(abs(npo_alpha$Shannon[1] - npo_alpha$Shannon[2]), 3)
+  )
+  
+  print("NPO Analysis Summary:")
+  print(summary_report)
+}
+```
