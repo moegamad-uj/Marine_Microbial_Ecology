@@ -139,6 +139,28 @@ ggsave("plots/pcoa_plot.png",
   height = 8, 
   dpi = 300)
 ```
+# Salinity-Diversity
+```{r}
+# Plot the relationship between mean salinity and Shannon diversity index.
+# Calculate Shannon diversity if not present in metadata
+meta <- data.frame(sample_data(TO.trades.bac.DCM.rel.mean))
+shannon_div <- estimate_richness(TO.trades.bac.DCM.rel.mean, 
+                               measures = "Shannon")
+meta$shannon <- shannon_div$Shannon
+
+ggplot(meta, aes(x = Mean_Salinity_PSU, y = shannon)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  labs(
+    title = "Shannon Diversity vs Salinity",
+    x = "Salinity (PSU)",
+    y = "Shannon Diversity"
+  )
+
+```
+
+
 # Beta Diversity Comparison (Ocean_sea_regions)
 ```{r}
 # Calculate beta diversity using Bray-Curtis dissimilarity
