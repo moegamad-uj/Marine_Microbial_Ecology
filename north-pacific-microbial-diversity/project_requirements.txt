@@ -1,0 +1,1 @@
+install.packages(c("phyloseq", "tidyverse", "vegan", "ggplot2", "RColorBrewer", "viridis", "reshape2", "scales", "gridExtra", "maps", "ggspatial"))

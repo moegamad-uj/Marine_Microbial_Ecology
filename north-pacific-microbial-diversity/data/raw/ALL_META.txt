@@ -1,0 +1,6 @@
+SampleID,Sample_label,Ocean_sea_regions,Mean_Lat,Mean_Long,Mean_Depth_m,Mean_Temperature_degC,Mean_Salinity_PSU,Mean_Oxygen_umolkg,Mean_Nitrates_umolL,EnvironmentalFeature,Marine_pelagic_biomes_Longhurst_2007
+1,TARA_137_DCM_0.22-3,NPO,15.5,-120.5,100,-1.2,34.5,120,10,(DCM),Trades
+2,TARA_138_DCM_0.22-3,NPO,15.6,-120.4,110,-1.0,34.6,90,12,(DCM),Trades
+3,TARA_139_DCM_0.22-3,NPO,15.7,-120.3,120,-0.8,34.7,110,8,(DCM),Trades
+4,TARA_140_DCM_0.22-3,NPO,15.8,-120.2,130,-0.5,34.8,95,15,(DCM),Trades
+5,TARA_141_DCM_0.22-3,NPO,15.9,-120.1,140,-0.3,34.9,85,20,(DCM),Trades

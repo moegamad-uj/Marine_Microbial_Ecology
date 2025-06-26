@@ -1,0 +1,52 @@
+| Table 1: Summary of Environmental Variables at NPO Sampling Points |
+|---------------------------------------------------------------|
+| Variable                | Sample 1 (TARA_137_DCM_0.22-3) | Sample 2 (TARA_138_DCM_0.22-3) |
+|-------------------------|----------------------------------|----------------------------------|
+| Mean Latitude (°)      | [Insert Value]                  | [Insert Value]                  |
+| Mean Longitude (°)     | [Insert Value]                  | [Insert Value]                  |
+| Mean Depth (m)         | [Insert Value]                  | [Insert Value]                  |
+| Mean Temperature (°C)   | [Insert Value]                  | [Insert Value]                  |
+| Mean Salinity (PSU)    | [Insert Value]                  | [Insert Value]                  |
+| Mean Oxygen (μmol/kg)   | [Insert Value]                  | [Insert Value]                  |
+| Mean Nitrates (μmol/L)  | [Insert Value]                  | [Insert Value]                  |
+
+| Table 2: Alpha Diversity Metrics for NPO Samples |
+|---------------------------------------------------|
+| Metric        | Sample 1 (TARA_137_DCM_0.22-3) | Sample 2 (TARA_138_DCM_0.22-3) |
+|---------------|----------------------------------|----------------------------------|
+| Shannon Index | [Insert Value]                  | [Insert Value]                  |
+| Chao1         | [Insert Value]                  | [Insert Value]                  |
+| Simpson       | [Insert Value]                  | [Insert Value]                  |
+
+| Table 3: Nutrient Levels at NPO Sampling Points |
+|--------------------------------------------------|
+| Nutrient      | Sample 1 (TARA_137_DCM_0.22-3) | Sample 2 (TARA_138_DCM_0.22-3) |
+|---------------|----------------------------------|----------------------------------|
+| Oxygen (μmol/kg) | [Insert Value]                  | [Insert Value]                  |
+| Nitrates (μmol/L) | [Insert Value]                  | [Insert Value]                  |
+
+| Table 4: Bray-Curtis Dissimilarity Between NPO Samples |
+|----------------------------------------------------------|
+| Sample Comparison                     | Dissimilarity Value |
+|--------------------------------------|---------------------|
+| TARA_137_DCM_0.22-3 vs TARA_138_DCM_0.22-3 | [Insert Value]     |
+
+| Table 5: Top 15 Bacterial Classes in NPO Samples |
+|---------------------------------------------------|
+| Class        | Sample 1 (TARA_137_DCM_0.22-3) | Sample 2 (TARA_138_DCM_0.22-3) |
+|--------------|----------------------------------|----------------------------------|
+| Class 1      | [Insert Value]                  | [Insert Value]                  |
+| Class 2      | [Insert Value]                  | [Insert Value]                  |
+| Class 3      | [Insert Value]                  | [Insert Value]                  |
+| Class 4      | [Insert Value]                  | [Insert Value]                  |
+| Class 5      | [Insert Value]                  | [Insert Value]                  |
+| Class 6      | [Insert Value]                  | [Insert Value]                  |
+| Class 7      | [Insert Value]                  | [Insert Value]                  |
+| Class 8      | [Insert Value]                  | [Insert Value]                  |
+| Class 9      | [Insert Value]                  | [Insert Value]                  |
+| Class 10     | [Insert Value]                  | [Insert Value]                  |
+| Class 11     | [Insert Value]                  | [Insert Value]                  |
+| Class 12     | [Insert Value]                  | [Insert Value]                  |
+| Class 13     | [Insert Value]                  | [Insert Value]                  |
+| Class 14     | [Insert Value]                  | [Insert Value]                  |
+| Class 15     | [Insert Value]                  | [Insert Value]                  |

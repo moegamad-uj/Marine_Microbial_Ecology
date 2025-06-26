@@ -1,0 +1,54 @@
+Title: Microbial Diversity Assessment in the North Pacific Gyre
+
+Abstract:
+This study investigates the microbial diversity within two closely located sampling points in the North Pacific Gyre. Despite their proximity, significant differences in community composition were observed. This manuscript outlines the methodologies employed, the results obtained, and the implications of these findings in understanding microbial ecology in oceanic environments.
+
+1. Introduction
+   - Overview of the North Pacific Gyre and its ecological significance.
+   - Importance of studying microbial communities in marine ecosystems.
+   - Objectives of the study: To assess microbial diversity and environmental conditions at two sampling points within the North Pacific Gyre.
+
+2. Methods
+   2.1 Data Collection
+   - Description of the datasets used, including OTU and taxonomy tables, and metadata.
+   - Sources of data: TO_OTU.txt, TO_TAX.txt, META2.txt, and ALL_META.txt.
+
+   2.2 Data Processing
+   - Overview of the data processing steps conducted in R, including normalization and filtering of OTU data.
+   - Description of the R scripts used for analysis: NPO_samples.Rmd, environmental_analysis.R, community_composition.R, and statistical_tests.R.
+
+   2.3 Statistical Analysis
+   - Explanation of the statistical tests performed to compare microbial diversity and environmental variables between the two sampling points.
+
+3. Results
+   3.1 Environmental Conditions
+   - Presentation of environmental data, including temperature, salinity, oxygen, and nutrient levels.
+   - Comparison of environmental conditions between the two sampling points, supported by plots (e.g., npo_environmental_comparison.png).
+
+   3.2 Microbial Community Composition
+   - Analysis of community composition, highlighting the differences in taxonomic distributions.
+   - Visualization of the top bacterial classes using plots (e.g., npo_class_composition.png).
+
+   3.3 Alpha Diversity Metrics
+   - Presentation of alpha diversity metrics (Shannon, Chao1, Simpson) calculated for the samples.
+   - Discussion of diversity patterns observed between the two points, supported by plots (e.g., npo_alpha_diversity.png).
+
+   3.4 Geographic Analysis
+   - Mapping of sampling locations and discussion of geographic factors influencing microbial diversity (e.g., npo_geographic_locations.png).
+
+4. Discussion
+   - Interpretation of the findings in the context of existing literature.
+   - Potential explanations for the observed differences in microbial composition despite geographic proximity.
+   - Implications for understanding microbial ecology in the North Pacific Gyre.
+
+5. Conclusion
+   - Summary of key findings and their significance.
+   - Suggestions for future research directions, including the need for temporal studies and broader geographic assessments.
+
+6. References
+   - List of references cited throughout the manuscript, formatted according to the chosen citation style (see literature.bib for details).
+
+7. Appendices
+   - Additional tables and figures that support the findings of the study, stored in the manuscript/tables and manuscript/figures directories.
+
+This draft manuscript serves as a comprehensive overview of the project, detailing the methodologies, findings, and implications of the research conducted on microbial diversity in the North Pacific Gyre. Further revisions will be made based on feedback and additional analyses.
