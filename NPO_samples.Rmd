@@ -8,6 +8,7 @@ output:
 ---
 
 # Loading Packages
+
 ```{r setup, message=FALSE, warning=FALSE}
 library(phyloseq)
 library(tidyverse)
@@ -20,6 +21,7 @@ library(scales)
 ```
 
 # Set Working Directory and Load Data
+
 ```{r}
 setwd("C:/Users/Uzair/Documents/R/Marine_Microbial_Ecology")
 
@@ -53,6 +55,7 @@ TO.trades.bac.DCM.rel.mean <- filter_taxa(TO.trades.bac.DCM.rel, function(x) mea
 ```
 
 # Check Available Samples and Extract NPO
+
 ```{r}
 # Check what ocean regions are available
 print("Available Ocean Regions:")
@@ -80,6 +83,7 @@ if(sum(npo_check, na.rm = TRUE) > 0) {
 ```
 
 # Extract NPO Samples for Analysis
+
 ```{r}
 # Extract only NPO samples
 npo_samples <- subset_samples(TO.trades.bac.DCM.rel.mean, Ocean_sea_regions == "(NPO)")
@@ -91,6 +95,7 @@ print(paste("Number of NPO samples:", nsamples(npo_samples)))
 ```
 
 # Environmental Variable Comparison
+
 ```{r}
 # Compare environmental variables between NPO samples
 env_vars_compare <- c("Mean_Lat", "Mean_Long", "Mean_Depth_m", "Mean_Temperature_degC",
@@ -111,6 +116,7 @@ if(nrow(npo_env) == 2) {
 ```
 
 # Visualize Environmental Differences
+
 ```{r}
 # Prepare data for visualization
 npo_env$Sample <- rownames(npo_env)
@@ -140,6 +146,7 @@ ggsave("plots/npo_environmental_comparison.png",
 ```
 
 # Alpha Diversity Comparison
+
 ```{r}
 # First, extract NPO samples from the COUNT data (not relative abundance)
 npo_samples_counts <- subset_samples(TO.trades.bac.DCM, Ocean_sea_regions == "(NPO)")
@@ -181,6 +188,7 @@ ggsave("plots/npo_alpha_diversity.png",
 ```
 
 # Beta Diversity Analysis
+
 ```{r}
 # Calculate Bray-Curtis dissimilarity between NPO samples
 npo_dist <- distance(npo_samples, method = "bray")
@@ -206,6 +214,7 @@ if(nsamples(npo_samples) > 2) {
 ```
 
 # Bacterial Community Composition Analysis
+
 ```{r}
 # Compare at Class level
 # Agglomerate at Class level
@@ -247,9 +256,8 @@ ggsave("plots/npo_class_composition.png",
     width = 14, height = 8, dpi = 300)
 ```
 
-
-
 # Geographic Analysis
+
 ```{r}
 # Analyze geographic and sampling differences
 npo_geo <- npo_meta[, c("Mean_Lat", "Mean_Long", "Sample_label")]
@@ -287,8 +295,8 @@ ggsave("plots/npo_geographic_locations.png",
        width = 10, height = 6, dpi = 300)
 ```
 
-
 # Summary and Conclusions
+
 ```{r}
 cat("
 ## Summary of NPO Sample Analysis
@@ -320,6 +328,7 @@ cat("
 ```
 
 # Create Summary Report
+
 ```{r}
 # Create a summary table of all findings
 env_diff_summary <- data.frame(
