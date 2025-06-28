@@ -212,6 +212,52 @@ if(nsamples(npo_samples) > 2) {
     )
 }
 ```
+# Statistical Analysis of Environmental Drivers
+Interpretation Guidelines:
+Magnitude (Absolute Value):
+|±0.5|: Small difference
+|±1.0|: Moderate difference
+|±2.0|: Large difference
+```{r}
+# Test which environmental variables best explain community differences
+# Note: With only 2 samples, statistical power is limited, but we can examine patterns
+
+# Create environmental distance matrix
+env_vars_for_analysis <- c("Mean_Temperature_degC", "Mean_Salinity_PSU", 
+                          "Mean_Oxygen_umolkg", "Mean_Nitrates_umolL")
+npo_env_subset <- npo_env[, env_vars_for_analysis]
+
+# Calculate environmental distances
+env_dist <- dist(scale(npo_env_subset), method = "euclidean")
+
+# Mantel test to compare environmental and community distances
+mantel_result <- mantel(npo_dist, env_dist, method = "pearson", permutations = 999)
+
+print("Mantel Test Results (Community vs Environment):")
+print(mantel_result)
+
+# Individual variable correlations with community dissimilarity
+env_correlations <- sapply(env_vars_for_analysis, function(var) {
+  var_diff <- abs(diff(npo_env[, var]))
+  return(var_diff)
+})
+
+print("Environmental Variable Differences:")
+print(env_correlations)
+
+# Rank variables by their potential influence
+env_importance <- data.frame(
+  Variable = names(env_correlations),
+  Absolute_Difference = env_correlations,
+  Standardized_Difference = scale(env_correlations)[,1]
+)
+
+env_importance <- env_importance[order(abs(env_importance$Standardized_Difference), decreasing = TRUE),]
+
+print("Environmental Variables Ranked by Difference:")
+print(env_importance)
+```
+
 
 # Bacterial Community Composition Analysis
 
@@ -302,6 +348,8 @@ ggplot(npo_geo, aes(x = Mean_Long, y = Mean_Lat, color = Sample_label)) +
 ggsave("plots/npo_geographic_locations.png", 
        width = 10, height = 6, dpi = 300)
 ```
+
+
 
 # Summary and Conclusions
 
